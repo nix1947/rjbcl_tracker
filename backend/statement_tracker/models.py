@@ -151,6 +151,31 @@ class Transaction(models.Model):
         ('Cancelled', 'Cancelled'),
         ('Reconciled', 'Reconciled'),
     ]
+    
+    BRANCH_CHOICES = [
+        ('head_office', 'प्रधान कार्यलय'),
+        ('chabahil', 'चाबहिल'),
+        ('lagankhel', 'लगनखेल'),
+        ('kalanki', 'कलंकी'),
+        ('suryabinayak', 'सूर्यविनायक'),
+        ('banepa', 'बनेपा'),
+        ('biratnagar', 'विराटनगर'),
+        ('birgunj', 'वीरगञ्ज'),
+        ('pokhara', 'पोखरा'),
+        ('butwal', 'बुटवल'),
+        ('nepalgunj', 'नेपालगञ्ज'),
+        ('dhangadhi', 'धनगढी'),
+        ('hetauda', 'हेटौडा'),
+        ('bhaktapur', 'भक्तपुर'),
+        ('lalitpur', 'ललितपुर'),
+        ('baglung', 'बागलुङ'),
+        ('dhankuta', 'धनकुटा'),
+        ('birtamod', 'बिर्तामोड'),
+        ('narayangadh', 'नारायणगढ'),
+        ('ghorahi', 'घोराही'),
+    ]
+
+    branch = models.CharField(max_length=255, choices=BRANCH_CHOICES)
 
     created_by = models.ForeignKey(settings.AUTH_USER_MODEL, related_name='transactions_created', on_delete=models.PROTECT)
     created_date = models.DateTimeField(default=timezone.now, editable=False)
@@ -160,6 +185,7 @@ class Transaction(models.Model):
     bank_trans_id = models.CharField(max_length=100, null=True, blank=False)
     bank_deposit_date = models.DateField()
 
+    branch = models.CharField(max_length=255, choices=())
     cheque_no = models.CharField(max_length=50, blank=True, null=True)
     policy_no = models.CharField(max_length=100, blank=True, null=True)
     transaction_detail = models.TextField()
