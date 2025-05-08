@@ -1,0 +1,122 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>API Dashboard</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+</head>
+<body class="bg-gray-100">
+  <div class="flex h-screen">
+
+    <!-- Sidebar -->
+    <aside class="w-64 bg-gray-800 text-white flex flex-col">
+      <div class="p-4 text-2xl font-bold border-b border-gray-700">Dashboard</div>
+
+      <!-- Search Field -->
+      <div class="p-4">
+        <input type="text" placeholder="Search..." class="w-full p-2 rounded bg-gray-700 text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500">
+      </div>
+
+      <!-- Navigation -->
+      <nav class="p-4 space-y-4 overflow-y-auto">
+
+        <!-- Auth Section -->
+        <div>
+          <h2 class="text-sm uppercase text-gray-400 mb-2">Auth</h2>
+          <ul class="space-y-1">
+            <li><a href="/api/auth/login/" class="block p-2 hover:bg-gray-700 rounded">🔑 Login</a></li>
+            <li><a href="/api/auth/refresh/" class="block p-2 hover:bg-gray-700 rounded">🔁 Refresh Token</a></li>
+            <li><a href="/api/auth/change-password/" class="block p-2 hover:bg-gray-700 rounded">🔄 Change Password</a></li>
+            <li><a href="/api/auth/password-reset/" class="block p-2 hover:bg-gray-700 rounded">📩 Request Reset</a></li>
+            <li><a href="/api/auth/password-reset-confirm/" class="block p-2 hover:bg-gray-700 rounded">✅ Confirm Reset</a></li>
+          </ul>
+        </div>
+
+        <!-- Banks Section -->
+        <div>
+          <h2 class="text-sm uppercase text-gray-400 mb-2">Banks</h2>
+          <ul class="space-y-1">
+            <li><a href="/api/banks/" class="block p-2 hover:bg-gray-700 rounded">📋 List Banks</a></li>
+            <li><a href="/api/banks/" class="block p-2 hover:bg-gray-700 rounded">➕ Add New Bank</a></li>
+            <li><a href="#" class="block p-2 hover:bg-gray-700 rounded">🏛️ Bank Details</a></li>
+          </ul>
+        </div>
+
+        <!-- Transactions Section -->
+        <div>
+          <h2 class="text-sm uppercase text-gray-400 mb-2">Transactions</h2>
+          <ul class="space-y-1">
+            <li><a href="/api/transactions/" class="block p-2 hover:bg-gray-700 rounded">📋 List Transactions</a></li>
+            <li><a href="/api/transactions/" class="block p-2 hover:bg-gray-700 rounded">➕ Add Transaction</a></li>
+            <li><a href="#" class="block p-2 hover:bg-gray-700 rounded">🔍 Transaction Details</a></li>
+            <li><a href="#" class="block p-2 hover:bg-gray-700 rounded">🔍 Reconcile</a></li>
+            <li><a href="#" class="block p-2 hover:bg-gray-700 rounded">✔️ Verify</a></li>
+          </ul>
+        </div>
+
+        <!-- Users Section -->
+        <div>
+          <h2 class="text-sm uppercase text-gray-400 mb-2">Users</h2>
+          <ul class="space-y-1">
+            <li><a href="/api/users/me/" class="block p-2 hover:bg-gray-700 rounded">👤 My Profile</a></li>
+            <li><a href="/api/users/" class="block p-2 hover:bg-gray-700 rounded">📋 All Users</a></li>
+            <li><a href="/api/users/" class="block p-2 hover:bg-gray-700 rounded">➕ Add New User</a></li>
+            <li><a href="#" class="block p-2 hover:bg-gray-700 rounded">👤 User Details</a></li>
+          </ul>
+        </div>
+
+      </nav>
+    </aside>
+
+    <!-- Main Content -->
+    <main class="flex-1 p-6 overflow-auto">
+      <h1 class="text-3xl font-semibold mb-4">Welcome to the API Dashboard</h1>
+      <p class="text-gray-600 mb-6">Use the sidebar to navigate through API operations.</p>
+
+      <!-- Reports Section -->
+      <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+        <div class="bg-white p-4 rounded shadow">
+          <h2 class="text-xl font-semibold mb-2">User Registrations</h2>
+          <canvas id="userChart" height="150"></canvas>
+        </div>
+
+        <div class="bg-white p-4 rounded shadow">
+          <h2 class="text-xl font-semibold mb-2">Transaction Volume</h2>
+          <canvas id="transactionChart" height="150"></canvas>
+        </div>
+      </div>
+
+    </main>
+
+  </div>
+
+  <script>
+    const userChart = new Chart(document.getElementById('userChart'), {
+      type: 'line',
+      data: {
+        labels: ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun'],
+        datasets: [{
+          label: 'New Users',
+          data: [10, 20, 30, 25, 40, 60],
+          borderColor: '#3B82F6',
+          fill: false
+        }]
+      }
+    });
+
+    const transactionChart = new Chart(document.getElementById('transactionChart'), {
+      type: 'bar',
+      data: {
+        labels: ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun'],
+        datasets: [{
+          label: 'Transactions',
+          data: [200, 400, 300, 500, 700, 600],
+          backgroundColor: '#10B981'
+        }]
+      }
+    });
+  </script>
+</body>
+</html>

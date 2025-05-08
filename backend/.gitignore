@@ -1,0 +1,99 @@
+# Byte-compiled / optimized / DLL files
+__pycache__/
+*.py[cod]
+*$py.class
+
+# Django related
+*.log
+*.pot
+*.pyc
+*.mo
+*.db
+*.sqlite3
+
+# Django media / static files
+# media/
+# staticfiles/
+# static/
+
+# Local env files
+.env
+.env.*
+
+# PostgreSQL related
+*.pgsql
+*.psql
+
+# VS Code settings
+.vscode/
+
+# PyCharm settings
+.idea/
+*.iml
+
+# Python virtual environment
+venv/
+ENV/
+env/
+.venv/
+
+# pip-wheel-metadata
+pip-wheel-metadata/
+
+# Unit test / coverage
+htmlcov/
+.tox/
+.nox/
+.coverage
+.coverage.*
+.cache
+nosetests.xml
+coverage.xml
+*.cover
+*.py,cover
+.hypothesis/
+.pytest_cache/
+test-results/
+
+# Distribution / packaging
+.Python
+build/
+develop-eggs/
+dist/
+downloads/
+eggs/
+.eggs/
+lib/
+lib64/
+parts/
+sdist/
+var/
+*.egg-info/
+.installed.cfg
+*.egg
+
+# MyPy
+.mypy_cache/
+.dmypy.json
+dmypy.json
+
+# Pyre type checker
+.pyre/
+
+# pytype
+.pytype/
+
+# Pylint
+pylint-report.txt
+pylint-global.txt
+
+# Bandit security reports
+bandit.json
+
+# Database dumps
+*.sql
+*.dump
+
+# Docker
+*.pid
+docker-compose.override.yml
