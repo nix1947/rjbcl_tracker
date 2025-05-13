@@ -4,7 +4,7 @@ from dotenv import load_dotenv
 load_dotenv()  # Load from .env file
 
 
-DEBUG = Falseg
+DEBUG = False
 
 
 DATABASES = {
