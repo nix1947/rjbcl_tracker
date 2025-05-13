@@ -152,7 +152,9 @@ DEFAULT_FROM_EMAIL = 'your_email@gmail.com'
 
 ## Media and static settings.
 MEDIA_ROOT = BASE_DIR / 'media'
-STATIC_ROOT = BASE_DIR / 'static'
+STATIC_ROOT = BASE_DIR / 'staticfiles'
+MEDIA_URL = '/media/'
+STATIC_URL = '/static/'
 
 
 
