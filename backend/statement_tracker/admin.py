@@ -1,8 +1,19 @@
 from django.contrib import admin
 from django.contrib.auth.admin import UserAdmin as BaseUserAdmin
 from .models import User, Bank, Transaction
+from django.contrib.auth.admin import UserAdmin
 
-# Custom User Admin
+
+
+from django.contrib import admin
+from django.contrib.auth.admin import UserAdmin as BaseUserAdmin
+from .models import User
+
+
+from django.contrib import admin
+from django.contrib.auth.admin import UserAdmin as BaseUserAdmin
+from .models import User
+
 class UserAdmin(BaseUserAdmin):
     model = User
     list_display = ('email', 'username', 'full_name', 'mobile', 'is_staff', 'is_active', 'date_joined')
@@ -18,14 +29,36 @@ class UserAdmin(BaseUserAdmin):
     add_fieldsets = (
         (None, {
             'classes': ('wide',),
-            'fields': ('email', 'username', 'full_name', 'mobile', 'password', 'password2',
-                       'is_staff', 'is_superuser', 'is_active'),
+            'fields': ('email', 'username', 'full_name', 'mobile', 'password1', 'password2', 'is_staff', 'is_superuser', 'is_active'),
         }),
     )
-    # Note: For add_fieldsets, you'd typically have a custom form (UserCreationForm)
-    # to handle password confirmation ('password2'), but this is a basic setup.
 
 admin.site.register(User, UserAdmin)
+
+from django.contrib import admin
+from django.contrib.admin import AdminSite
+from django.utils.translation import gettext_lazy as _
+from django.contrib import admin
+from django.http import HttpResponse
+import openpyxl
+
+
+class RJCBLAdminSite(AdminSite):
+    site_header = _('RJCBL Administration')
+    site_title = _('RJCBL Admin Portal')
+    index_title = _('Welcome to RJCBL Administration')
+
+    def get_app_list(self, request):
+        """
+        Customize the app list ordering and labeling
+        """
+        app_list = super().get_app_list(request)
+        # Reorder or rename apps as needed
+        return app_list
+
+# Replace the default admin site
+admin_site = RJCBLAdminSite(name='rjcbl_admin')
+
 
 # Bank Admin
 @admin.register(Bank)
@@ -38,50 +71,137 @@ class BankAdmin(admin.ModelAdmin):
 @admin.register(Transaction)
 class TransactionAdmin(admin.ModelAdmin):
     list_display = (
-        'system_voucher_no', 'bank', 'bank_account_no', 'voucher_amount', 'status',
-        'created_by', 'created_date', 'system_value_date', 'is_verified'
+        'system_voucher_no',
+        'branch',
+        'created_by',
+        'created_date',
+        'bank',
+        'bank_account_no',
+        'bank_trans_id',
+        'bank_deposit_date',
+        'cheque_no',
+        'policy_no',
+        'transaction_detail',
+        'system_value_date',
+        'debit',
+        'credit',
+        'used_in_system',
+        'reconciled_by',
+        'reconciled_date',
+        'system_posted_by',
+        'system_verified_by',
+        'voucher_amount',
+        'refund_amount',
+        'reverse_voucher_no',
+        'reversal_correction_voucher_no',
+        'refund_voucher_no',
+        'remarks',
+        'source',
+        'status',
+        'is_verified',
+        'voucher_image',
     )
-    list_filter = ('status', 'is_verified', 'bank', 'source', 'bank_deposit_date', 'system_value_date', 'created_date')
+
+    list_filter = (
+        'branch',
+        'status',
+        'is_verified',
+        'used_in_system',
+        'source',
+        'bank',
+        'created_date',
+        'bank_deposit_date',
+        'system_value_date',
+    )
+
     search_fields = (
-        'system_voucher_no', 'bank_account_no', 'bank_trans_id', 'cheque_no',
-        'policy_no', 'transaction_detail', 'created_by__username', 'bank__name'
+        'system_voucher_no',
+        'bank_trans_id',
+        'bank_account_no',
+        'policy_no',
+        'cheque_no',
+        'transaction_detail',
+        'remarks',
+        'reverse_voucher_no',
+        'reversal_correction_voucher_no',
+        'refund_voucher_no',
     )
-    readonly_fields = ('created_date', 'created_by') # Often 'created_by' is set automatically
+
+    readonly_fields = (
+        'created_date',
+    )
 
     fieldsets = (
-        ('Core Information', {
-            'fields': ('system_voucher_no', 'bank', 'bank_account_no', 'bank_trans_id', 'bank_deposit_date', 'transaction_detail')
+        ('Transaction Information', {
+            'fields': (
+                'system_voucher_no',
+                'branch',
+                'status',
+                'is_verified',
+                'used_in_system',
+                'source',
+            )
         }),
-        ('Financials', {
-            'fields': ('voucher_amount', 'debit', 'credit', 'refund_amount')
+        ('Bank Details', {
+            'fields': (
+                'bank',
+                'bank_account_no',
+                'bank_trans_id',
+                'bank_deposit_date',
+                'cheque_no',
+            )
         }),
-        ('Categorization & Status', {
-            'fields': ('source', 'status', 'is_verified', 'used_in_system')
+        ('Financial Details', {
+            'fields': (
+                'debit',
+                'credit',
+                'voucher_amount',
+                'refund_amount',
+            )
         }),
-        ('System Dates & Users', {
-            'fields': ('created_by', 'created_date', 'system_value_date', 'reconciled_by', 'reconciled_date',
-                       'system_posted_by', 'system_verified_by')
+        ('Reference Numbers', {
+            'fields': (
+                'policy_no',
+                'reverse_voucher_no',
+                'reversal_correction_voucher_no',
+                'refund_voucher_no',
+            )
         }),
-        ('Additional Identifiers', {
-            'fields': ('cheque_no', 'policy_no', 'reverse_voucher_no', 'reversal_correction_voucher_no', 'refund_voucher_no')
+        ('Dates', {
+            'fields': (
+                'created_date',
+                'system_value_date',
+            )
         }),
-        ('Attachments & Remarks', {
-            'fields': ('voucher_image', 'remarks')
+        ('Descriptions', {
+            'fields': (
+                'transaction_detail',
+                'remarks',
+            )
+        }),
+        ('Documentation', {
+            'fields': (
+                'voucher_image',
+            )
+        }),
+        ('User References', {
+            'fields': (
+                'created_by',
+                'reconciled_by',
+                'reconciled_date',
+                'system_posted_by',
+                'system_verified_by',
+            )
         }),
     )
 
     def save_model(self, request, obj, form, change):
-        if not obj.pk: # if creating new object
+        if not obj.pk:  # Only set created_by during the first save
             obj.created_by = request.user
         super().save_model(request, obj, form, change)
 
-    # If you want to display the image in admin (optional)
-    # def voucher_image_tag(self, obj):
-    #     from django.utils.html import format_html
-    #     if obj.voucher_image:
-    #         return format_html('<img src="{}" width="150" height="auto" />', obj.voucher_image.url)
-    #     return "-"
-    # voucher_image_tag.short_description = 'Voucher Image Preview'
-    #
-    # # Add to list_display or readonly_fields if needed
-    # readonly_fields = ('created_date', 'created_by', 'voucher_image_tag')
+    def get_readonly_fields(self, request, obj=None):
+        # Make created_by read-only after creation
+        if obj:  # editing an existing object
+            return self.readonly_fields + ('created_by',)
+        return self.readonly_fields

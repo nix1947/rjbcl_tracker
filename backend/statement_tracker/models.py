@@ -185,7 +185,6 @@ class Transaction(models.Model):
     bank_trans_id = models.CharField(max_length=100, null=True, blank=False)
     bank_deposit_date = models.DateField()
 
-    branch = models.CharField(max_length=255, choices=())
     cheque_no = models.CharField(max_length=50, blank=True, null=True)
     policy_no = models.CharField(max_length=100, blank=True, null=True)
     transaction_detail = models.TextField()
@@ -200,9 +199,8 @@ class Transaction(models.Model):
 
     reconciled_by = models.ForeignKey(settings.AUTH_USER_MODEL, related_name='transactions_reconciled', on_delete=models.SET_NULL, blank=True, null=True)
     reconciled_date = models.DateField(blank=True, null=True)
-    system_posted_by = models.ForeignKey(settings.AUTH_USER_MODEL, related_name='transactions_posted', on_delete=models.SET_NULL, blank=True, null=True)
-    system_verified_by = models.ForeignKey(settings.AUTH_USER_MODEL, related_name='transactions_verified', on_delete=models.SET_NULL, blank=True, null=True)
-
+    system_posted_by = models.CharField(max_length=255)
+    system_verified_by = models.CharField(max_length=255)
     voucher_amount = models.DecimalField(max_digits=18, decimal_places=2)
     refund_amount = models.DecimalField(max_digits=18, decimal_places=2, default=0.00, blank=True, null=True)
 
@@ -223,7 +221,7 @@ class Transaction(models.Model):
         verbose_name_plural = 'Transactions'
         ordering = ['-created_date']
         constraints = [
-            models.UniqueConstraint(fields=['bank', 'bank_trans_id'], name='unique_bank_transaction')
+            models.UniqueConstraint(fields=['bank', 'bank_trans_id', 'system_voucher_no'], name='unique_bank_transaction')
         ]
 
     def clean(self):

@@ -1,0 +1,14 @@
+#site-name a {
+    color: #004085;
+    font-weight: bold;
+    font-size: 22px;
+    text-decoration: none;
+}
+
+#header {
+    background-color: #dff0d8;
+}
+
+#branding h1 {
+    padding: 10px 15px;
+}

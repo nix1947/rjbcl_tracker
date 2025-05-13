@@ -102,7 +102,7 @@ class UserDetailSerializer(serializers.ModelSerializer):
 class BankSerializer(serializers.ModelSerializer):
     class Meta:
         model = Bank
-        fields = ('id', 'name', 'description')
+        fields = ('id', 'name', 'account_no', 'description')
         extra_kwargs = {
             'name': {'required': True},
             'description': {'required': False}

@@ -88,7 +88,7 @@ class BankViewSet(viewsets.ModelViewSet):
     """
     queryset = Bank.objects.all().order_by('name')
     serializer_class = BankSerializer
-    permission_classes = [IsAuthenticated]
+    # permission_classes = [IsAuthenticated]
 
 
     def create(self, request, *args, **kwargs):
