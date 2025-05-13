@@ -118,3 +118,120 @@ curl -X POST http://127.0.0.1:8000/api/users/ \
 ## 📅 License
 
 MIT License — feel free to use and modify!
+
+## Production deployment
+```angular2html
+python manage.py migrate --settings=rjbcl.production
+```
+- Run with gunicorn
+```angular2html
+gunicorn --bind 127.0.0.1:8000 your_project_name.wsgi:application
+```
+**SystemD with gunicorn**
+```angular2html
+sudo mkdir -p /run/gunicorn
+sudo chown centos:centos /run/gunicorn
+sudo vim /etc/systemd/system/gunicorn.service
+sudo chcon -t httpd_var_run_t /run/gunicorn
+```
+```angular2html
+[Unit]
+Description=gunicorn daemon for Django project
+After=network.target
+
+[Service]
+User=centos
+Group=centos
+RuntimeDirectory=gunicorn
+RuntimeDirectoryMode=0755
+WorkingDirectory=/data/www/statement_tracker.rbs.gov.np/backend
+ExecStart=/data/www/statement_tracker.rbs.gov.np/backend/venv/bin/gunicorn --workers 3 --bind unix:/run/gunicorn/gunicorn.sock rjbcl.wsgi:application
+
+[Install]
+WantedBy=multi-user.target
+
+```
+
+** Run this **
+```angular2html
+chmod +x /data/www/statement_tracker.rbs.gov.np/backend/venv/bin/gunicorn
+
+sudo systemctl daemon-reexec
+sudo systemctl start gunicorn
+sudo systemctl enable gunicorn
+
+```
+
+**Nginx configuration**
+```angular2html
+
+server {
+    listen 80;
+    server_name statement.rbs.gov.np;
+    return 301 https://$server_name$request_uri;
+}
+
+server {
+    listen 443 ssl;
+    server_name statement.rbs.gov.np;
+    
+    # SSL Configuration
+    ssl_certificate /etc/ssl/certs/star_rbs_gov_np_combined.crt;
+    ssl_certificate_key /etc/ssl/private/rbs_private.key;
+    ssl_trusted_certificate /etc/ssl/certs/ca-bundle.crt;
+
+    # SSL Optimization
+    ssl_protocols TLSv1.2 TLSv1.3;
+    ssl_ciphers 'ECDHE-ECDSA-AES128-GCM-SHA256:ECDHE-RSA-AES128-GCM-SHA256:ECDHE-ECDSA-AES256-GCM-SHA384:ECDHE-RSA-AES256-GCM-SHA384:DHE-RSA-AES128-GCM-SHA256:DHE-RSA-AES256-GCM-SHA384';
+    ssl_prefer_server_ciphers on;
+    ssl_session_cache shared:SSL:10m;
+    ssl_session_timeout 10m;
+    ssl_dhparam /etc/nginx/dhparam.pem;
+
+    # Security Headers
+    add_header Strict-Transport-Security "max-age=31536000; includeSubDomains" always;
+    add_header X-Content-Type-Options nosniff;
+    add_header X-Frame-Options "SAMEORIGIN";
+    add_header X-XSS-Protection "1; mode=block";
+    add_header Referrer-Policy "strict-origin-when-cross-origin";
+
+    # Static files
+    location /static/ {
+        alias /data/www/statement.rbs.gov.np/backend/staticfiles/;
+        expires 365d;
+        access_log off;
+        gzip on;
+        gzip_types text/plain text/css application/json application/javascript;
+    }
+
+    # Media files
+    location /media/ {
+        alias /data/www/statement.rbs.gov.np/backend/media/;
+        expires 30d;
+        access_log off;
+    }
+
+    # Django application
+    location / {
+        include proxy_params;
+        proxy_pass http://unix:/run/gunicorn/gunicorn.sock;
+        proxy_set_header X-Forwarded-Proto $scheme;
+        proxy_set_header X-Real-IP $remote_addr;
+        proxy_set_header Host $host;
+        proxy_redirect off;
+        
+        # WebSocket support (if needed)
+        proxy_http_version 1.1;
+        proxy_set_header Upgrade $http_upgrade;
+        proxy_set_header Connection "upgrade";
+    }
+
+    # Error pages
+    error_page 500 502 503 504 /500.html;
+    location = /500.html {
+        root /data/www/statement.rbs.gov.np/backend/templates/;
+    }
+}
+
+
+```
