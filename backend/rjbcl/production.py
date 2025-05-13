@@ -3,6 +3,10 @@ import os
 from dotenv import load_dotenv
 load_dotenv()  # Load from .env file
 
+
+DEBUG = Falseg
+
+
 DATABASES = {
     'default': {
         'ENGINE': 'django.db.backends.mysql',
