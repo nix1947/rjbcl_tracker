@@ -29,7 +29,7 @@ SECRET_KEY = 'django-insecure-d1$u3@jml+tuy6*i=@v%z1fee+^zu_cljl2un(0l#7&c59=4^1
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = True
 
-ALLOWED_HOSTS = ['*']
+ALLOWED_HOSTS = ['localhost', 'statement.rbs.gov.np', ]
 
 # Authentication
 AUTH_USER_MODEL  = 'statement_tracker.User'
@@ -163,3 +163,4 @@ STATIC_ROOT = os.path.join(BASE_DIR, 'staticfiles')  # For collectstatic
 STATICFILES_DIRS = [
     os.path.join(BASE_DIR, 'static'),  # Your additional static directories
 ]
+
