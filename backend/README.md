@@ -136,19 +136,49 @@ sudo chcon -t httpd_var_run_t /run/gunicorn
 ```
 ```angular2html
 [Unit]
-Description=gunicorn daemon for Django project
-After=network.target
+Description=Gunicorn Daemon for RJBCL Statement Tracker
+After=network.target mariadb.service
+Requires=mariadb.service
 
 [Service]
 User=centos
-Group=centos
-RuntimeDirectory=gunicorn
-RuntimeDirectoryMode=0755
+Group=nginx
 WorkingDirectory=/data/www/statement_tracker.rbs.gov.np/backend
-ExecStart=/data/www/statement_tracker.rbs.gov.np/backend/venv/bin/gunicorn --workers 3 --bind unix:/run/gunicorn/gunicorn.sock rjbcl.wsgi:application
+Environment="PATH=/data/www/statement_tracker.rbs.gov.np/backend/venv/bin:/usr/local/bin:/usr/bin:/bin"
+Environment="DJANGO_SETTINGS_MODULE=rjbcl.production"
+
+# Runtime Directory Setup
+RuntimeDirectory=gunicorn
+RuntimeDirectoryMode=0750
+PIDFile=/run/gunicorn/gunicorn.pid
+
+# Security (minimal for troubleshooting)
+PrivateTmp=true
+NoNewPrivileges=yes
+ProtectSystem=strict
+ReadWritePaths=/run/gunicorn /var/log /data/www/statement_tracker.rbs.gov.np
+
+# Gunicorn Execution
+ExecStart=/data/www/statement_tracker.rbs.gov.np/backend/venv/bin/gunicorn \
+          --workers 3 \
+          --timeout 120 \
+          --bind unix:/run/gunicorn/gunicorn.sock \
+          --pid /run/gunicorn/gunicorn.pid \
+          --access-logfile /var/log/gunicorn/access.log \
+          --error-logfile /var/log/gunicorn/error.log \
+          --capture-output \
+          --log-level info \
+          rjbcl.wsgi:application
+
+# Process management
+Restart=on-failure
+RestartSec=10s
+StartLimitIntervalSec=60
+StartLimitBurst=5
 
 [Install]
 WantedBy=multi-user.target
+
 
 ```
 
@@ -235,3 +265,4 @@ server {
 
 
 ```
+

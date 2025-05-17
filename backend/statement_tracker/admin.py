@@ -1,18 +1,16 @@
-from django.contrib import admin
-from django.contrib.auth.admin import UserAdmin as BaseUserAdmin
+from django.http import HttpResponse
+from django.utils import timezone
+
 from .models import User, Bank, Transaction
-from django.contrib.auth.admin import UserAdmin
+
+from django.contrib.admin import AdminSite
+from django.utils.translation import gettext_lazy as _
+from openpyxl import Workbook
 
 
 
 from django.contrib import admin
 from django.contrib.auth.admin import UserAdmin as BaseUserAdmin
-from .models import User
-
-
-from django.contrib import admin
-from django.contrib.auth.admin import UserAdmin as BaseUserAdmin
-from .models import User
 
 class UserAdmin(BaseUserAdmin):
     model = User
@@ -34,14 +32,6 @@ class UserAdmin(BaseUserAdmin):
     )
 
 admin.site.register(User, UserAdmin)
-
-from django.contrib import admin
-from django.contrib.admin import AdminSite
-from django.utils.translation import gettext_lazy as _
-from django.contrib import admin
-from django.http import HttpResponse
-import openpyxl
-
 
 class RJCBLAdminSite(AdminSite):
     site_header = _('RJCBL Administration')
@@ -205,3 +195,92 @@ class TransactionAdmin(admin.ModelAdmin):
         if obj:  # editing an existing object
             return self.readonly_fields + ('created_by',)
         return self.readonly_fields
+
+    # Add export action
+    actions = ['export_to_excel']
+
+    def export_to_excel(self, request, queryset):
+        """
+        Export selected transactions to Excel
+        """
+        response = HttpResponse(
+            content_type='application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'
+        )
+        filename = f"transactions_export_{timezone.now().strftime('%Y-%m-%d')}.xlsx"
+        response['Content-Disposition'] = f'attachment; filename={filename}'
+
+        wb = Workbook()
+        ws = wb.active
+        ws.title = "Transactions"
+
+        # Write headers
+        headers = [
+            'System Voucher No',
+            'Branch',
+            'Created By',
+            'Created Date',
+            'Bank',
+            'Bank Account No',
+            'Bank Transaction ID',
+            'Bank Deposit Date',
+            'Cheque No',
+            'Policy No',
+            'Transaction Detail',
+            'System Value Date',
+            'Debit',
+            'Credit',
+            'Used in System',
+            'Reconciled By',
+            'Reconciled Date',
+            'System Posted By',
+            'System Verified By',
+            'Voucher Amount',
+            'Refund Amount',
+            'Reverse Voucher No',
+            'Reversal Correction Voucher No',
+            'Refund Voucher No',
+            'Remarks',
+            'Source',
+            'Status',
+            'Is Verified',
+        ]
+
+        ws.append(headers)
+
+        # Write data
+        for transaction in queryset:
+            ws.append([
+                transaction.system_voucher_no,
+                str(transaction.branch) if transaction.branch else '',
+                str(transaction.created_by) if transaction.created_by else '',
+                transaction.created_date.strftime('%Y-%m-%d %H:%M:%S') if transaction.created_date else '',
+                str(transaction.bank) if transaction.bank else '',
+                transaction.bank_account_no or '',
+                transaction.bank_trans_id or '',
+                transaction.bank_deposit_date.strftime('%Y-%m-%d') if transaction.bank_deposit_date else '',
+                transaction.cheque_no or '',
+                transaction.policy_no or '',
+                transaction.transaction_detail or '',
+                transaction.system_value_date.strftime('%Y-%m-%d') if transaction.system_value_date else '',
+                transaction.debit or 0,
+                transaction.credit or 0,
+                'Yes' if transaction.used_in_system else 'No',
+                str(transaction.reconciled_by) if transaction.reconciled_by else '',
+                transaction.reconciled_date.strftime('%Y-%m-%d %H:%M:%S') if transaction.reconciled_date else '',
+                str(transaction.system_posted_by) if transaction.system_posted_by else '',
+                str(transaction.system_verified_by) if transaction.system_verified_by else '',
+                transaction.voucher_amount or 0,
+                transaction.refund_amount or 0,
+                transaction.reverse_voucher_no or '',
+                transaction.reversal_correction_voucher_no or '',
+                transaction.refund_voucher_no or '',
+                transaction.remarks or '',
+                transaction.source or '',
+                transaction.status or '',
+                'Yes' if transaction.is_verified else 'No',
+            ])
+
+        wb.save(response)
+        return response
+
+    export_to_excel.short_description = "Export selected transactions to Excel"
