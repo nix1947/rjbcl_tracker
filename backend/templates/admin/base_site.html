@@ -1,12 +1,11 @@
 {% extends "admin/base.html" %}
-{% load static %}
 
-{% block title %}RJBCL Statement Tracker{% endblock %}
+{% block title %}{% if subtitle %}{{ subtitle }} | {% endif %}{{ title }} | राष्ट्रिय जीवन बीमा कं लि{% endblock %}
 
 {% block branding %}
-<h1 id="site-name"><a href="{% url 'admin:index' %}">RJBCL Statement Tracker</a></h1>
+<div style="display: flex; align-items: center;">
+    <h1 id="site-name">राष्ट्रिय जीवन बीमा कं लि</h1>
+</div>
 {% endblock %}
 
-{% block extrastyle %}
-<link rel="stylesheet" type="text/css" href="{% static 'admin/custom.css' %}">
-{% endblock %}
+{% block nav-global %}{% endblock %}

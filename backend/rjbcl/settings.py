@@ -38,6 +38,7 @@ AUTH_USER_MODEL  = 'statement_tracker.User'
 # Application definition
 
 INSTALLED_APPS = [
+
     'django.contrib.admin',
     'django.contrib.auth',
     'django.contrib.contenttypes',
@@ -49,6 +50,7 @@ INSTALLED_APPS = [
     'rest_framework',
     'rest_framework_simplejwt',
     'drf_yasg', # for swagger
+
     
     # Custom app
     'statement_tracker'
@@ -163,4 +165,5 @@ STATIC_ROOT = os.path.join(BASE_DIR, 'staticfiles')  # For collectstatic
 STATICFILES_DIRS = [
     os.path.join(BASE_DIR, 'static'),  # Your additional static directories
 ]
+
 

@@ -284,3 +284,5 @@ class TransactionAdmin(admin.ModelAdmin):
         return response
 
     export_to_excel.short_description = "Export selected transactions to Excel"
+
+

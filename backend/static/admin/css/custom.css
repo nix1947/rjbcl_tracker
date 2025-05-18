@@ -1,0 +1,15 @@
+/* Change login page background */
+.login {
+    background: #f8f9fa;
+}
+
+/* Style the header */
+#header {
+    background: #006600; /* Green color often used in insurance */
+    color: white;
+}
+
+/* Style the submit button */
+.submit-row input {
+    background: #006600;
+}
