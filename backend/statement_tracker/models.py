@@ -1,11 +1,14 @@
 # models.py
 from django.db import models
 from django.contrib.auth.models import AbstractBaseUser, BaseUserManager, PermissionsMixin
+from django.db.models.signals import pre_delete, pre_save
+from django.dispatch import receiver
 from django.utils import timezone
-from django.core.exceptions import ValidationError
 from django.utils.translation import gettext_lazy as _
 import re
 from django.conf import settings
+from django.core.exceptions import ValidationError
+
 
 
 class CustomUserManager(BaseUserManager):
@@ -99,35 +102,11 @@ class User(AbstractBaseUser, PermissionsMixin):
         verbose_name = 'User'
         verbose_name_plural = 'Users'
 
-class Bank(models.Model):
-    name = models.CharField(max_length=255, unique=True, verbose_name='Bank Name')
-    account_no = models.CharField(max_length=255)
-    description = models.CharField(max_length=255, blank=True)
-
-    def clean(self):
-        super().clean()
-        if self.name:
-            self.name = ' '.join(self.name.strip().split())
-            if len(self.name) < 3:
-                raise ValidationError({'name': _('Bank name must be at least 3 characters.')})
-            if not re.match(r'^[a-zA-Z0-9\s\-\.&]+$', self.name):
-                raise ValidationError({'name': _('Bank name contains invalid characters.')})
-
-    def save(self, *args, **kwargs):
-        self.full_clean()
-        super().save(*args, **kwargs)
-
-    def __str__(self):
-        return self.name
-
-    class Meta:
-        verbose_name = 'Bank'
-        verbose_name_plural = 'Banks'
-        ordering = ['name']
 
 
 
-class Transaction(models.Model):
+class BankStatement(models.Model):
+    objects = None
     TRANSACTION_TYPES = [
         ('DEPOSIT', 'Deposit'),
         ('REFUND', 'Refund'),
@@ -145,13 +124,6 @@ class Transaction(models.Model):
         ('Other', 'Other'),
     ]
 
-    STATUS_CHOICES = [
-        ('Pending', 'Pending'),
-        ('Completed', 'Completed'),
-        ('Cancelled', 'Cancelled'),
-        ('Reconciled', 'Reconciled'),
-    ]
-    
     BRANCH_CHOICES = [
         ('head_office', 'प्रधान कार्यलय'),
         ('chabahil', 'चाबहिल'),
@@ -175,121 +147,155 @@ class Transaction(models.Model):
         ('ghorahi', 'घोराही'),
     ]
 
-    branch = models.CharField(max_length=255, choices=BRANCH_CHOICES)
+    def validate_file_size(file):
+        max_size = 5 * 1024 * 1024  # 1MB
+        if file.size > max_size:
+            raise ValidationError("File too large (max 1MB)")
 
-    created_by = models.ForeignKey(settings.AUTH_USER_MODEL, related_name='transactions_created', on_delete=models.PROTECT)
+    bank_code = models.CharField(max_length=255, help_text="NBL")
+    bank_name = models.CharField(max_length=255, help_text="Bank name")
+    bank_account_no = models.CharField(max_length=255, null=True, help_text="Bank account number")
+    bank_deposit_date = models.DateField(null=True, blank=True, help_text="Bank deposit date")
+    balance = models.DecimalField(max_digits=10, decimal_places=2, help_text="Bank balance")
+    bank_transaction_detail= models.CharField(max_length=255, null=True, help_text="Bank transaction detail")
+    debit = models.DecimalField(max_digits=10, decimal_places=2, null=True, blank=True, help_text="Debit amount")
+    credit = models.DecimalField(max_digits=10, decimal_places=2, null=True, blank=True, help_text="Credit amount")
+    system_voucher_no = models.CharField(max_length=255, blank=True, null=True, help_text="System voucher number (e.g., RP300181820000001)")
+    system_amount = models.DecimalField(max_digits=10, decimal_places=2, null=True, blank=True, help_text="System amount")
+    policy_no = models.CharField(max_length=500, null=True, help_text="Policy number(s), e.g., 2156, 2122")
+    remarks = models.TextField(blank=True, null=True, help_text="Remarks")
+    branch = models.CharField(max_length=255, choices=BRANCH_CHOICES, null=True, blank=True, help_text="Receipt Issue From Branch")
+    source = models.CharField(max_length=50, choices=SOURCE_TYPES, null=True, blank=True, help_text="Transaction Source")
+    bank_voucher = models.FileField(
+        upload_to='vouchers/',
+        blank=True,
+        null=True,
+        validators=[validate_file_size]
+    )
+
+    created_by = models.ForeignKey(settings.AUTH_USER_MODEL, related_name='bankstatement_createdby', on_delete=models.PROTECT)
     created_date = models.DateTimeField(default=timezone.now, editable=False)
 
-    bank = models.ForeignKey('Bank', on_delete=models.PROTECT)
-    bank_account_no = models.CharField(max_length=50)
-    bank_trans_id = models.CharField(max_length=100, null=True, blank=False)
-    bank_deposit_date = models.DateField()
+    def __str__(self):
+        return f"{self.bank_code} - {self.policy_no or 'N/A'}"
 
-    cheque_no = models.CharField(max_length=50, blank=True, null=True)
-    policy_no = models.CharField(max_length=100, blank=True, null=True)
-    transaction_detail = models.TextField()
 
-    system_voucher_no = models.CharField(max_length=100, unique=True)
-    system_value_date = models.DateField()
-
-    debit = models.DecimalField(max_digits=18, decimal_places=2, default=0.00)
-    credit = models.DecimalField(max_digits=18, decimal_places=2, default=0.00)
-
-    used_in_system = models.BooleanField(default=False)
-
-    reconciled_by = models.ForeignKey(settings.AUTH_USER_MODEL, related_name='transactions_reconciled', on_delete=models.SET_NULL, blank=True, null=True)
-    reconciled_date = models.DateField(blank=True, null=True)
-    system_posted_by = models.CharField(max_length=255)
-    system_verified_by = models.CharField(max_length=255)
-    voucher_amount = models.DecimalField(max_digits=18, decimal_places=2)
-    refund_amount = models.DecimalField(max_digits=18, decimal_places=2, default=0.00, blank=True, null=True)
-
-    reverse_voucher_no = models.CharField(max_length=100, blank=True, null=True)
-    reversal_correction_voucher_no = models.CharField(max_length=100, blank=True, null=True)
-    refund_voucher_no = models.CharField(max_length=100, blank=True, null=True)
-
-    remarks = models.TextField(blank=True, null=True)
-
-    source = models.CharField(max_length=50, choices=SOURCE_TYPES, blank=True, null=True)
-    status = models.CharField(max_length=20, choices=STATUS_CHOICES, default='Pending')
-    is_verified = models.BooleanField(default=False)
-
-    voucher_image = models.ImageField(upload_to='voucher_images/', blank=True, null=True)
 
     class Meta:
-        verbose_name = 'Transaction'
-        verbose_name_plural = 'Transactions'
+        verbose_name = "Bank Statement"
+        verbose_name_plural = "Bank Statements"
         ordering = ['-created_date']
         constraints = [
-            models.UniqueConstraint(fields=['bank', 'bank_trans_id', 'system_voucher_no'], name='unique_bank_transaction')
+            models.UniqueConstraint(fields=['bank_code', 'balance', 'credit', 'bank_deposit_date'],
+                                    name='unique_bank_statement')
         ]
 
-    def clean(self):
-        super().clean()
-        errors = {}
 
-        today = timezone.now().date()
-        if self.bank_deposit_date > today:
-            errors['bank_deposit_date'] = _('Deposit date cannot be in the future.')
-        if self.system_value_date > today:
-            errors['system_value_date'] = _('Value date cannot be in the future.')
-        if self.bank_deposit_date > self.system_value_date:
-            errors['system_value_date'] = _('Value date cannot be before deposit date.')
+class BankStatementChangeHistory(models.Model):
+    """
+    Django model to save the log of bank statement changes
+    """
+    ACTION_CHOICES = [
+        ('UPDATE', 'Update'),
+        ('DELETE', 'Delete'),
+    ]
 
-        if self.debit < 0:
-            errors['debit'] = _('Debit amount cannot be negative.')
-        if self.credit < 0:
-            errors['credit'] = _('Credit amount cannot be negative.')
-        if self.debit > 0 and self.credit > 0:
-            errors['debit'] = errors['credit'] = _('Cannot have both debit and credit amounts.')
-        if self.voucher_amount <= 0:
-            errors['voucher_amount'] = _('Voucher amount must be positive.')
+    bank_statement = models.ForeignKey('BankStatement', on_delete=models.SET_NULL, null=True, blank=True, related_name='change_history')
 
-        if self.refund_amount is not None:
-            if self.refund_amount < 0:
-                errors['refund_amount'] = _('Refund amount cannot be negative.')
-            if self.refund_amount > self.voucher_amount:
-                errors['refund_amount'] = _('Refund cannot exceed voucher amount.')
+    bank_code = models.CharField(max_length=255, help_text="NBL")
+    bank_name = models.CharField(max_length=255, help_text="Bank name")
+    bank_account_no = models.CharField(max_length=255, null=True, help_text="Bank account number")
+    bank_deposit_date = models.DateField(null=True, blank=True, help_text="Bank deposit date")
+    balance = models.DecimalField(max_digits=10, decimal_places=2, help_text="Bank balance")
+    bank_transaction_detail = models.CharField(max_length=255, null=True, help_text="Bank transaction detail")
+    debit = models.DecimalField(max_digits=10, decimal_places=2, null=True, blank=True, help_text="Debit amount")
+    credit = models.DecimalField(max_digits=10, decimal_places=2, null=True, blank=True, help_text="Credit amount")
+    system_voucher_no = models.CharField(max_length=255, blank=True, null=True, help_text="System voucher number")
+    system_amount = models.DecimalField(max_digits=10, decimal_places=2, null=True, blank=True,
+                                        help_text="System amount")
+    policy_no = models.CharField(max_length=500, null=True, help_text="Policy number(s)")
+    remarks = models.TextField(blank=True, null=True, help_text="Remarks")
+    branch = models.CharField(max_length=255, null=True, blank=True, help_text="Receipt Issue From Branch")
+    source = models.CharField(max_length=50, null=True, blank=True, help_text="Transaction Source")
 
-        if not self.bank_account_no or not self.bank_account_no.strip():
-            errors['bank_account_no'] = _('Account number is required.')
-        elif not re.match(r'^[a-zA-Z0-9\-]+$', self.bank_account_no):
-            errors['bank_account_no'] = _('Account number contains invalid characters.')
+    changed_by = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.PROTECT)
+    changed_at = models.DateTimeField(default=timezone.now, editable=False)
+    action = models.CharField(max_length=10, choices=ACTION_CHOICES, help_text="Change action type")
 
-        if self.cheque_no and not re.match(r'^[a-zA-Z0-9\-]+$', self.cheque_no):
-            errors['cheque_no'] = _('Cheque number contains invalid characters.')
-
-        if not self.transaction_detail or len(self.transaction_detail.strip()) < 10:
-            errors['transaction_detail'] = _('Detail must be at least 10 characters.')
-
-        if not self.system_voucher_no or not self.system_voucher_no.strip():
-            errors['system_voucher_no'] = _('Voucher number is required.')
-        elif not re.match(r'^[a-zA-Z0-9\-_/]+$', self.system_voucher_no):
-            errors['system_voucher_no'] = _('Voucher number contains invalid characters.')
-
-        for field_name in ['reverse_voucher_no', 'reversal_correction_voucher_no', 'refund_voucher_no']:
-            val = getattr(self, field_name)
-            if val and not re.match(r'^[a-zA-Z0-9\-_/]+$', val):
-                errors[field_name] = _(f'{field_name.replace("_", " ").title()} contains invalid characters.')
-
-        if errors:
-            raise ValidationError(errors)
-
-    def save(self, *args, **kwargs):
-        # Strip all text fields
-        text_fields = [
-            'bank_account_no', 'bank_trans_id', 'cheque_no', 'policy_no',
-            'transaction_detail', 'system_voucher_no', 'reverse_voucher_no',
-            'reversal_correction_voucher_no', 'refund_voucher_no', 'remarks'
-        ]
-
-        for field in text_fields:
-            value = getattr(self, field)
-            if value and isinstance(value, str):
-                setattr(self, field, value.strip())
-
-        self.full_clean()
-        super().save(*args, **kwargs)
+    class Meta:
+        ordering = ['-changed_at']
+        verbose_name = "Bank Statement Change History"
+        verbose_name_plural = "Bank Statement Change History"
 
     def __str__(self):
-        return f"{self.system_voucher_no} - {self.transaction_detail[:50]}"
+        return f"{self.action} - {self.bank_statement} at {self.changed_at} by {self.changed_by}"
+
+
+# Signals for logging updates and deletes of bank statement change
+@receiver(pre_save, sender='statement_tracker.BankStatement')
+def create_history_on_update(sender, instance, **kwargs):
+    if not instance.pk:
+        return  # New object; skip logging
+
+    try:
+        old_instance = sender.objects.get(pk=instance.pk)
+    except sender.DoesNotExist:
+        return
+
+    tracked_fields = [
+        'bank_code', 'bank_name', 'bank_account_no', 'bank_deposit_date', 'balance',
+        'bank_transaction_detail', 'debit', 'credit', 'system_voucher_no', 'system_amount',
+        'policy_no', 'remarks', 'branch', 'source'
+    ]
+
+    has_changes = any(
+        getattr(old_instance, field) != getattr(instance, field)
+        for field in tracked_fields
+    )
+
+    if has_changes:
+        BankStatementChangeHistory.objects.create(
+            bank_statement=instance,
+            bank_code=old_instance.bank_code,
+            bank_name=old_instance.bank_name,
+            bank_account_no=old_instance.bank_account_no,
+            bank_deposit_date=old_instance.bank_deposit_date,
+            balance=old_instance.balance,
+            bank_transaction_detail=old_instance.bank_transaction_detail,
+            debit=old_instance.debit,
+            credit=old_instance.credit,
+            system_voucher_no=old_instance.system_voucher_no,
+            system_amount=old_instance.system_amount,
+            policy_no=old_instance.policy_no,
+            remarks=old_instance.remarks,
+            branch=old_instance.branch,
+            source=old_instance.source,
+            changed_by=instance.created_by,
+            changed_at=timezone.now(),
+            action='UPDATE'
+        )
+
+
+@receiver(pre_delete, sender='statement_tracker.BankStatement')
+def create_history_on_delete(sender, instance, **kwargs):
+    """Signal for tracking the delete of objects"""
+    BankStatementChangeHistory.objects.create(
+        bank_statement=instance,
+        bank_code=instance.bank_code,
+        bank_name=instance.bank_name,
+        bank_account_no=instance.bank_account_no,
+        bank_deposit_date=instance.bank_deposit_date,
+        balance=instance.balance,
+        bank_transaction_detail=instance.bank_transaction_detail,
+        debit=instance.debit,
+        credit=instance.credit,
+        system_voucher_no=instance.system_voucher_no,
+        system_amount=instance.system_amount,
+        policy_no=instance.policy_no,
+        remarks=instance.remarks,
+        branch=instance.branch,
+        source=instance.source,
+        changed_by=instance.created_by,
+        changed_at=timezone.now(),
+        action='DELETE'
+    )

@@ -13,11 +13,9 @@ from django.core.mail import send_mail
 from django.conf import settings
 from .serializers import PasswordResetRequestSerializer
 from django.utils import timezone
-from .models import Bank, Transaction
 from django.contrib.auth import get_user_model
-from .serializers import UserSerializer, UserDetailSerializer, BankSerializer, TransactionSerializer, PasswordResetConfirmSerializer, PasswordResetRequestSerializer
-from rest_framework.views import APIView
-from rest_framework.response import Response
+from .serializers import UserSerializer, UserDetailSerializer, PasswordResetConfirmSerializer, PasswordResetRequestSerializer
+
 from rest_framework.permissions import IsAuthenticated
 from .serializers import PasswordChangeSerializer
 from rest_framework.views import APIView
@@ -82,113 +80,6 @@ class UserViewSet(viewsets.ModelViewSet):
         serializer = UserDetailSerializer(request.user, context={'request': request})
         return Response(serializer.data)
 
-class BankViewSet(viewsets.ModelViewSet):
-    """
-    API endpoint that allows banks to be viewed or edited.
-    """
-    queryset = Bank.objects.all().order_by('name')
-    serializer_class = BankSerializer
-    # permission_classes = [IsAuthenticated]
-
-
-    def create(self, request, *args, **kwargs):
-        serializer = self.get_serializer(data=request.data)
-        serializer.is_valid(raise_exception=True)
-        self.perform_create(serializer)
-        headers = self.get_success_headers(serializer.data)
-        return Response(
-            serializer.data,
-            status=status.HTTP_201_CREATED,
-            headers=headers
-        )
-
-    def update(self, request, *args, **kwargs):
-        partial = kwargs.pop('partial', False)
-        instance = self.get_object()
-        serializer = self.get_serializer(instance, data=request.data, partial=partial)
-        serializer.is_valid(raise_exception=True)
-        self.perform_update(serializer)
-        return Response(serializer.data)
-
-    def destroy(self, request, *args, **kwargs):
-        instance = self.get_object()
-        self.perform_destroy(instance)
-        return Response(status=status.HTTP_204_NO_CONTENT)
-
-class TransactionViewSet(viewsets.ModelViewSet):
-    """
-    API endpoint that allows transactions to be viewed or edited.
-    """
-    queryset = Transaction.objects.all().order_by('-created_date')
-    serializer_class = TransactionSerializer
-    permission_classes = [IsAuthenticated]
-
-    
-    def get_queryset(self):
-        """
-        Optionally filter transactions by user if not admin
-        """
-        queryset = super().get_queryset()
-        if not self.request.user.is_staff:
-            queryset = queryset.filter(created_by=self.request.user)
-        return queryset
-
-    def perform_create(self, serializer):
-        serializer.save(created_by=self.request.user)
-
-    def create(self, request, *args, **kwargs):
-        serializer = self.get_serializer(data=request.data)
-        serializer.is_valid(raise_exception=True)
-        self.perform_create(serializer)
-        headers = self.get_success_headers(serializer.data)
-        return Response(
-            serializer.data,
-            status=status.HTTP_201_CREATED,
-            headers=headers
-        )
-
-    def update(self, request, *args, **kwargs):
-        partial = kwargs.pop('partial', False)
-        instance = self.get_object()
-        serializer = self.get_serializer(instance, data=request.data, partial=partial)
-        serializer.is_valid(raise_exception=True)
-        self.perform_update(serializer)
-        return Response(serializer.data)
-
-    def destroy(self, request, *args, **kwargs):
-        instance = self.get_object()
-        self.perform_destroy(instance)
-        return Response(status=status.HTTP_204_NO_CONTENT)
-
-    @action(detail=True, methods=['post'], permission_classes=[permissions.IsAdminUser])
-    def verify(self, request, pk=None):
-        transaction = self.get_object()
-        if transaction.is_verified:
-            return Response(
-                {'status': 'transaction already verified'},
-                status=status.HTTP_400_BAD_REQUEST
-            )
-        
-        transaction.is_verified = True
-        transaction.save(update_fields=['is_verified'])
-        return Response({'status': 'transaction verified'})
-
-    @action(detail=True, methods=['post'], permission_classes=[permissions.IsAdminUser])
-    def reconcile(self, request, pk=None):
-        transaction = self.get_object()
-        if transaction.status == 'Reconciled':
-            return Response(
-                {'status': 'transaction already reconciled'},
-                status=status.HTTP_400_BAD_REQUEST
-            )
-
-        transaction.status = 'Reconciled'
-        transaction.reconciled_by = request.user
-        transaction.reconciled_date = timezone.now().date()
-        transaction.save(update_fields=['status', 'reconciled_by', 'reconciled_date'])
-        return Response({'status': 'transaction reconciled'})
-    
-    
 
 
 

@@ -1,11 +1,26 @@
-from django.http import HttpResponse
-from django.utils import timezone
 
-from .models import User, Bank, Transaction
+from .models import User, BankStatementChangeHistory
 
 from django.contrib.admin import AdminSite
 from django.utils.translation import gettext_lazy as _
-from openpyxl import Workbook
+
+
+
+from django.http import HttpResponse
+
+from django import forms
+from django.contrib import  messages
+from django.shortcuts import render, redirect
+from django.urls import path
+from .models import BankStatement
+import csv
+import io
+from datetime import datetime
+from django.contrib.admin.models import LogEntry, ADDITION, CHANGE, DELETION
+from django.utils.html import format_html
+from django.utils.safestring import mark_safe
+from django.urls import reverse
+import json
 
 
 
@@ -32,7 +47,6 @@ class UserAdmin(BaseUserAdmin):
     )
 
 admin.site.register(User, UserAdmin)
-
 class RJCBLAdminSite(AdminSite):
     site_header = _('RJCBL Administration')
     site_title = _('RJCBL Admin Portal')
@@ -50,239 +64,331 @@ class RJCBLAdminSite(AdminSite):
 admin_site = RJCBLAdminSite(name='rjcbl_admin')
 
 
-# Bank Admin
-@admin.register(Bank)
-class BankAdmin(admin.ModelAdmin):
-    list_display = ('name', 'description')
-    search_fields = ('name', 'description')
-    ordering = ('name',)
 
-# Transaction Admin
-@admin.register(Transaction)
-class TransactionAdmin(admin.ModelAdmin):
+class CSVUploadForm(forms.Form):
+    """Class for BankStatement bulk upload form"""
+    csv_file = forms.FileField()
+
+
+@admin.register(BankStatement)
+class BankStatementAdmin(admin.ModelAdmin):
+    # Template for bulk upload csv
+    change_list_template = "admin/bankstatement_changelist.html"
+
     list_display = (
-        'system_voucher_no',
-        'branch',
-        'created_by',
-        'created_date',
-        'bank',
-        'bank_account_no',
-        'bank_trans_id',
-        'bank_deposit_date',
-        'cheque_no',
-        'policy_no',
-        'transaction_detail',
-        'system_value_date',
-        'debit',
-        'credit',
-        'used_in_system',
-        'reconciled_by',
-        'reconciled_date',
-        'system_posted_by',
-        'system_verified_by',
-        'voucher_amount',
-        'refund_amount',
-        'reverse_voucher_no',
-        'reversal_correction_voucher_no',
-        'refund_voucher_no',
-        'remarks',
-        'source',
-        'status',
-        'is_verified',
-        'voucher_image',
+        'bank_code', 'bank_name', 'bank_account_no',
+        'bank_deposit_date', 'bank_transaction_detail',
+        'debit', 'credit', 'balance',
+        'system_voucher_no', 'system_amount',
+        'policy_no', 'branch', 'source',
+        'created_by', 'created_date', 'export_action_link'
     )
 
-    list_filter = (
-        'branch',
-        'status',
-        'is_verified',
-        'used_in_system',
-        'source',
-        'bank',
-        'created_date',
-        'bank_deposit_date',
-        'system_value_date',
-    )
-
-    search_fields = (
-        'system_voucher_no',
-        'bank_trans_id',
-        'bank_account_no',
-        'policy_no',
-        'cheque_no',
-        'transaction_detail',
-        'remarks',
-        'reverse_voucher_no',
-        'reversal_correction_voucher_no',
-        'refund_voucher_no',
-    )
-
-    readonly_fields = (
-        'created_date',
-    )
+    list_filter = ('branch', 'source', 'bank_name', 'created_date')
+    search_fields = ('bank_account_no', 'system_voucher_no', 'policy_no', 'remarks', 'bank_name', 'bank_code')
+    ordering = ('-created_date',)
+    date_hierarchy = 'created_date'
+    list_per_page = 50
+    readonly_fields = ('created_by', 'created_date')
 
     fieldsets = (
-        ('Transaction Information', {
-            'fields': (
-                'system_voucher_no',
-                'branch',
-                'status',
-                'is_verified',
-                'used_in_system',
-                'source',
-            )
-        }),
         ('Bank Details', {
             'fields': (
-                'bank',
-                'bank_account_no',
-                'bank_trans_id',
-                'bank_deposit_date',
-                'cheque_no',
+                'bank_code', 'bank_name', 'bank_account_no',
+                'bank_deposit_date', 'bank_transaction_detail',
+                'debit', 'credit', 'balance',
             )
         }),
-        ('Financial Details', {
+        ('System Information', {
             'fields': (
-                'debit',
-                'credit',
-                'voucher_amount',
-                'refund_amount',
-            )
-        }),
-        ('Reference Numbers', {
-            'fields': (
-                'policy_no',
-                'reverse_voucher_no',
-                'reversal_correction_voucher_no',
-                'refund_voucher_no',
-            )
-        }),
-        ('Dates', {
-            'fields': (
-                'created_date',
-                'system_value_date',
-            )
-        }),
-        ('Descriptions', {
-            'fields': (
-                'transaction_detail',
-                'remarks',
-            )
-        }),
-        ('Documentation', {
-            'fields': (
-                'voucher_image',
-            )
-        }),
-        ('User References', {
-            'fields': (
-                'created_by',
-                'reconciled_by',
-                'reconciled_date',
-                'system_posted_by',
-                'system_verified_by',
+                'system_voucher_no', 'system_amount',
+                'policy_no', 'remarks',
+                'branch', 'source',
+                'created_by', 'created_date',
             )
         }),
     )
 
     def save_model(self, request, obj, form, change):
-        if not obj.pk:  # Only set created_by during the first save
+        if not obj.pk:
             obj.created_by = request.user
         super().save_model(request, obj, form, change)
 
-    def get_readonly_fields(self, request, obj=None):
-        # Make created_by read-only after creation
-        if obj:  # editing an existing object
-            return self.readonly_fields + ('created_by',)
-        return self.readonly_fields
+    def has_delete_permission(self, request, obj=None):
+        # Allow delete only if it's a single object and user is superuser
+        if obj is not None and request.user.is_superuser:
+            return True
+        return False
 
-    # Add export action
-    actions = ['export_to_excel']
+    def get_actions(self, request):
+        # Remove bulk delete action for all users, including superuser
+        actions = super().get_actions(request)
+        if 'delete_selected' in actions:
+            del actions['delete_selected']
+        return actions
 
-    def export_to_excel(self, request, queryset):
-        """
-        Export selected transactions to Excel
-        """
-        response = HttpResponse(
-            content_type='application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'
-        )
-        filename = f"transactions_export_{timezone.now().strftime('%Y-%m-%d')}.xlsx"
+    def export_action_link(self, obj):
+        url = reverse('admin:bankstatement_export_single', args=[obj.pk])
+        return format_html('<a href="{}">Export CSV</a>', url)
+
+    export_action_link.short_description = "Export"
+
+    actions = ['export_selected_as_csv']
+
+    def get_export_data(self, queryset):
+        """Method to export the data"""
+        data = []
+        for obj in queryset:
+            data.append({
+                'Bank Code': obj.bank_code,
+                'Bank Name': obj.bank_name,
+                'Account No': obj.bank_account_no,
+                'Deposit Date': obj.bank_deposit_date,
+                'Transaction Detail': obj.bank_transaction_detail,
+                'Debit': obj.debit,
+                'Credit': obj.credit,
+                'Balance': obj.balance,
+                'Voucher No': obj.system_voucher_no,
+                'System Amount': obj.system_amount,
+                'Policy No': obj.policy_no,
+                'Remarks': obj.remarks,
+                'Branch': obj.branch,
+                'Source': obj.source,
+                'Created By': str(obj.created_by),
+                'Created Date': obj.created_date,
+            })
+        return data
+
+    def export_selected_as_csv(self, request, queryset):
+        return self.export_as_csv_response(queryset, filename="BankReconcillation.csv")
+
+    def export_as_csv_response(self, queryset, filename):
+        response = HttpResponse(content_type='text/csv; charset=utf-8')
         response['Content-Disposition'] = f'attachment; filename={filename}'
+        response.write('\ufeff')  # UTF-8 BOM
 
-        wb = Workbook()
-        ws = wb.active
-        ws.title = "Transactions"
+        data = self.get_export_data(queryset)
+        if not data:
+            return response
 
-        # Write headers
-        headers = [
-            'System Voucher No',
-            'Branch',
-            'Created By',
-            'Created Date',
-            'Bank',
-            'Bank Account No',
-            'Bank Transaction ID',
-            'Bank Deposit Date',
-            'Cheque No',
-            'Policy No',
-            'Transaction Detail',
-            'System Value Date',
-            'Debit',
-            'Credit',
-            'Used in System',
-            'Reconciled By',
-            'Reconciled Date',
-            'System Posted By',
-            'System Verified By',
-            'Voucher Amount',
-            'Refund Amount',
-            'Reverse Voucher No',
-            'Reversal Correction Voucher No',
-            'Refund Voucher No',
-            'Remarks',
-            'Source',
-            'Status',
-            'Is Verified',
-        ]
-
-        ws.append(headers)
-
-        # Write data
-        for transaction in queryset:
-            ws.append([
-                transaction.system_voucher_no,
-                str(transaction.branch) if transaction.branch else '',
-                str(transaction.created_by) if transaction.created_by else '',
-                transaction.created_date.strftime('%Y-%m-%d %H:%M:%S') if transaction.created_date else '',
-                str(transaction.bank) if transaction.bank else '',
-                transaction.bank_account_no or '',
-                transaction.bank_trans_id or '',
-                transaction.bank_deposit_date.strftime('%Y-%m-%d') if transaction.bank_deposit_date else '',
-                transaction.cheque_no or '',
-                transaction.policy_no or '',
-                transaction.transaction_detail or '',
-                transaction.system_value_date.strftime('%Y-%m-%d') if transaction.system_value_date else '',
-                transaction.debit or 0,
-                transaction.credit or 0,
-                'Yes' if transaction.used_in_system else 'No',
-                str(transaction.reconciled_by) if transaction.reconciled_by else '',
-                transaction.reconciled_date.strftime('%Y-%m-%d %H:%M:%S') if transaction.reconciled_date else '',
-                str(transaction.system_posted_by) if transaction.system_posted_by else '',
-                str(transaction.system_verified_by) if transaction.system_verified_by else '',
-                transaction.voucher_amount or 0,
-                transaction.refund_amount or 0,
-                transaction.reverse_voucher_no or '',
-                transaction.reversal_correction_voucher_no or '',
-                transaction.refund_voucher_no or '',
-                transaction.remarks or '',
-                transaction.source or '',
-                transaction.status or '',
-                'Yes' if transaction.is_verified else 'No',
-            ])
-
-        wb.save(response)
+        writer = csv.DictWriter(response, fieldnames=data[0].keys(), quoting=csv.QUOTE_ALL)
+        writer.writeheader()
+        for row in data:
+            writer.writerow(row)
         return response
 
-    export_to_excel.short_description = "Export selected transactions to Excel"
+    export_selected_as_csv.short_description = "Export selected as CSV"
+
+    def export_single_record(self, request, object_id):
+        queryset = self.get_queryset(request).filter(pk=object_id)
+        return self.export_as_csv_response(queryset, filename="bank_statement.csv")
+
+
+
+
+    def get_urls(self):
+        urls = super().get_urls()
+        custom_urls = [
+            path("upload-csv/", self.upload_csv, name="bankstatement_upload_csv"),
+            path("<path:object_id>/export/", self.export_single_record, name="bankstatement_export_single"),
+        ]
+        return custom_urls + urls
+
+    def upload_csv(self, request):
+        """Function for handling CSV upload and insert data in BankStatement model"""
+        if request.method == "POST":
+            form = CSVUploadForm(request.POST, request.FILES)
+            if form.is_valid():
+                file = form.cleaned_data['csv_file']
+                try:
+                    decoded_file = file.read().decode('utf-8-sig')
+                    reader = csv.DictReader(io.StringIO(decoded_file))
+
+                    count_created = 0
+                    count_skipped = 0
+
+                    for row in reader:
+                        bank_code = row['bank_code'].strip()
+                        bank_name = row['bank_name'].strip()
+                        bank_account_no = row['bank_account_no'].strip()
+                        bank_deposit_date = datetime.strptime(row['bank_deposit_date'].strip(), '%Y-%m-%d').date()
+                        debit = float(row.get('debit', 0) or 0)
+                        credit = float(row.get('credit', 0) or 0)
+                        balance = float(row.get('balance', 0) or 0)
+
+                        exists = BankStatement.objects.filter(
+                            bank_code=bank_code,
+                            bank_deposit_date=bank_deposit_date,
+                            credit=credit,
+                            balance=balance
+                        ).exists()
+
+                        if exists:
+
+                            count_skipped += 1
+                            continue
+
+                        BankStatement.objects.create(
+                            bank_code=bank_code,
+                            bank_name=bank_name,
+                            bank_account_no=bank_account_no,
+                            bank_deposit_date=bank_deposit_date,
+                            debit=debit,
+                            credit=credit,
+                            balance=balance,
+                            created_by=request.user
+                        )
+                        count_created += 1
+
+
+
+                    self.message_user(
+                        request,
+                        f"CSV upload complete: {count_created} created, {count_skipped} skipped (duplicates).",
+                        messages.SUCCESS
+                    )
+                    return redirect("..")
+                except Exception as e:
+                    print(e)
+                    self.message_user(request, f"Error: {str(e)}", messages.ERROR)
+
+        else:
+            form = CSVUploadForm()
+
+        return render(request, "admin/csv_upload_form.html", {"form": form})
+
+
+
+@admin.register(BankStatementChangeHistory)
+class BankStatementChangeHistoryAdmin(admin.ModelAdmin):
+    """Django admin for Log audit for BankStatementChangeHistory. model"""
+
+    list_display = (
+        'bank_code', 'bank_name','changed_at', 'changed_by', 'policy_no',
+        'bank_code', 'bank_name', 'bank_account_no', 'bank_deposit_date',
+        'balance', 'debit', 'credit', 'branch', 'source', 'action'
+    )
+    list_filter = ('changed_at', 'changed_by', 'bank_code', 'bank_name')
+    search_fields = ('bank_statement__bank_code', 'bank_statement__bank_name', 'changed_by__username')
+    readonly_fields = (
+        'bank_statement', 'changed_at', 'changed_by',
+        'bank_code', 'bank_name', 'bank_account_no', 'bank_deposit_date',
+        'balance', 'bank_transaction_detail', 'debit', 'credit',
+        'system_voucher_no', 'system_amount', 'policy_no', 'remarks',
+        'branch', 'source',
+    )
+
+
+    actions = ['export_selected_as_csv']
+
+    def has_add_permission(self, request):
+        # Prevent adding manually in admin
+        return False
+
+    def has_delete_permission(self, request, obj=None):
+        # Prevent deletion from admin
+        return False
+
+    def export_selected_as_csv(self, request, queryset):
+        return self.export_as_csv_response(queryset, filename="ReconcillationEditedHistory.csv")
+
+    def export_as_csv_response(self, queryset, filename):
+        response = HttpResponse(content_type='text/csv; charset=utf-8')
+        response['Content-Disposition'] = f'attachment; filename={filename}'
+        response.write('\ufeff')  # UTF-8 BOM
+
+        data = self.get_export_data(queryset)
+        if not data:
+            return response
+
+        writer = csv.DictWriter(response, fieldnames=data[0].keys(), quoting=csv.QUOTE_ALL)
+        writer.writeheader()
+        for row in data:
+            writer.writerow(row)
+        return response
+
+
+    def get_export_data(self, queryset):
+        """Method to export the data"""
+        data = []
+        for obj in queryset:
+            data.append({
+                'Bank Code': obj.bank_code,
+                'Bank Name': obj.bank_name,
+                'Account No': obj.bank_account_no,
+                'Deposit Date': obj.bank_deposit_date,
+                'Transaction Detail': obj.bank_transaction_detail,
+                'Debit': obj.debit,
+                'Credit': obj.credit,
+                'Balance': obj.balance,
+                'Voucher No': obj.system_voucher_no,
+                'System Amount': obj.system_amount,
+                'Policy No': obj.policy_no,
+                'Remarks': obj.remarks,
+                'Branch': obj.branch,
+                'Source': obj.source,
+                'Changed By': str(obj.changed_by),
+                'Created Date': obj.changed_at,
+                'action': obj.action
+            })
+        return data
+
+
+
+
+
+@admin.register(LogEntry)
+class LogEntryAdmin(admin.ModelAdmin):
+    list_display = [
+        'action_time', 'user', 'content_type', 'object_link', 'action_type', 'display_changes'
+    ]
+    list_filter = ['action_flag', 'user', 'content_type']
+    search_fields = ['object_repr', 'change_message']
+    readonly_fields = [f.name for f in LogEntry._meta.fields]
+
+    def object_link(self, obj):
+        if obj.action_flag == DELETION:
+            return format_html(f"<i>{obj.object_repr}</i>")
+        try:
+            url = reverse(f"admin:{obj.content_type.app_label}_{obj.content_type.model}_change", args=[obj.object_id])
+            return format_html('<a href="{}">{}</a>', url, obj.object_repr)
+        except:
+            return obj.object_repr
+    object_link.short_description = 'Object'
+
+    def has_delete_permission(self, request, obj=None):
+        # 🔒 Prevent delete for all users including superusers
+        return False
+
+    def action_type(self, obj):
+        if obj.action_flag == ADDITION:
+            return format_html('<span style="color:green;">Created</span>')
+        elif obj.action_flag == CHANGE:
+            return format_html('<span style="color:orange;">Modified</span>')
+        elif obj.action_flag == DELETION:
+            return format_html('<span style="color:red;">Deleted</span>')
+        return obj.action_flag
+    action_type.short_description = 'Action'
+
+    def display_changes(self, obj):
+        if obj.change_message and obj.action_flag == CHANGE:
+            try:
+                # parse if it's a structured change
+                changes = json.loads(obj.change_message)
+                if isinstance(changes, list):
+                    formatted = '<ul>'
+                    for change in changes:
+                        if isinstance(change, dict):
+                            for field, values in change.items():
+                                formatted += f'<li><b>{field}</b>: {values}</li>'
+                        else:
+                            formatted += f"<li>{change}</li>"
+                    formatted += '</ul>'
+                    return mark_safe(formatted)
+            except json.JSONDecodeError:
+                return obj.change_message
+        return obj.change_message or '-'
+    display_changes.short_description = 'Changes'
+
 
 

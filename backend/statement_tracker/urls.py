@@ -1,14 +1,12 @@
 from django.urls import path, include
 from django.views.generic import RedirectView
 from rest_framework.routers import DefaultRouter
-from .viewsets import UserViewSet, BankViewSet, TransactionViewSet, PasswordChangeView, PasswordResetRequestView, PasswordResetConfirmView
+from .viewsets import UserViewSet, PasswordChangeView, PasswordResetRequestView, PasswordResetConfirmView
 from rest_framework_simplejwt.views import TokenObtainPairView, TokenRefreshView
 from .views import api_index
 
 router = DefaultRouter()
 router.register(r'users', UserViewSet, basename='user')
-router.register(r'banks', BankViewSet, basename='bank')
-router.register(r'transactions', TransactionViewSet, basename='transaction')
 
 urlpatterns = [
     path('', RedirectView.as_view(url='/admin/', permanent=True)),
