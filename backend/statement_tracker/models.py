@@ -175,6 +175,8 @@ class BankStatement(models.Model):
 
     created_by = models.ForeignKey(settings.AUTH_USER_MODEL, related_name='bankstatement_createdby', on_delete=models.PROTECT)
     created_date = models.DateTimeField(default=timezone.now, editable=False)
+    modified_by = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.PROTECT, blank=True, null=True)
+
 
     def __str__(self):
         return f"{self.bank_code} - {self.policy_no or 'N/A'}"
@@ -230,72 +232,72 @@ class BankStatementChangeHistory(models.Model):
     def __str__(self):
         return f"{self.action} - {self.bank_statement} at {self.changed_at} by {self.changed_by}"
 
-
-# Signals for logging updates and deletes of bank statement change
-@receiver(pre_save, sender='statement_tracker.BankStatement')
-def create_history_on_update(sender, instance, **kwargs):
-    if not instance.pk:
-        return  # New object; skip logging
-
-    try:
-        old_instance = sender.objects.get(pk=instance.pk)
-    except sender.DoesNotExist:
-        return
-
-    tracked_fields = [
-        'bank_code', 'bank_name', 'bank_account_no', 'bank_deposit_date', 'balance',
-        'bank_transaction_detail', 'debit', 'credit', 'system_voucher_no', 'system_amount',
-        'policy_no', 'remarks', 'branch', 'source'
-    ]
-
-    has_changes = any(
-        getattr(old_instance, field) != getattr(instance, field)
-        for field in tracked_fields
-    )
-
-    if has_changes:
-        BankStatementChangeHistory.objects.create(
-            bank_statement=instance,
-            bank_code=old_instance.bank_code,
-            bank_name=old_instance.bank_name,
-            bank_account_no=old_instance.bank_account_no,
-            bank_deposit_date=old_instance.bank_deposit_date,
-            balance=old_instance.balance,
-            bank_transaction_detail=old_instance.bank_transaction_detail,
-            debit=old_instance.debit,
-            credit=old_instance.credit,
-            system_voucher_no=old_instance.system_voucher_no,
-            system_amount=old_instance.system_amount,
-            policy_no=old_instance.policy_no,
-            remarks=old_instance.remarks,
-            branch=old_instance.branch,
-            source=old_instance.source,
-            changed_by=instance.created_by,
-            changed_at=timezone.now(),
-            action='UPDATE'
-        )
-
-
-@receiver(pre_delete, sender='statement_tracker.BankStatement')
-def create_history_on_delete(sender, instance, **kwargs):
-    """Signal for tracking the delete of objects"""
-    BankStatementChangeHistory.objects.create(
-        bank_statement=instance,
-        bank_code=instance.bank_code,
-        bank_name=instance.bank_name,
-        bank_account_no=instance.bank_account_no,
-        bank_deposit_date=instance.bank_deposit_date,
-        balance=instance.balance,
-        bank_transaction_detail=instance.bank_transaction_detail,
-        debit=instance.debit,
-        credit=instance.credit,
-        system_voucher_no=instance.system_voucher_no,
-        system_amount=instance.system_amount,
-        policy_no=instance.policy_no,
-        remarks=instance.remarks,
-        branch=instance.branch,
-        source=instance.source,
-        changed_by=instance.created_by,
-        changed_at=timezone.now(),
-        action='DELETE'
-    )
+#
+# # Signals for logging updates and deletes of bank statement change
+# @receiver(pre_save, sender='statement_tracker.BankStatement')
+# def create_history_on_update(sender, instance, **kwargs):
+#     if not instance.pk:
+#         return  # New object; skip logging
+#
+#     try:
+#         old_instance = sender.objects.get(pk=instance.pk)
+#     except sender.DoesNotExist:
+#         return
+#
+#     tracked_fields = [
+#         'bank_code', 'bank_name', 'bank_account_no', 'bank_deposit_date', 'balance',
+#         'bank_transaction_detail', 'debit', 'credit', 'system_voucher_no', 'system_amount',
+#         'policy_no', 'remarks', 'branch', 'source'
+#     ]
+#
+#     has_changes = any(
+#         getattr(old_instance, field) != getattr(instance, field)
+#         for field in tracked_fields
+#     )
+#
+#     if has_changes:
+#         BankStatementChangeHistory.objects.create(
+#             bank_statement=instance,
+#             bank_code=old_instance.bank_code,
+#             bank_name=old_instance.bank_name,
+#             bank_account_no=old_instance.bank_account_no,
+#             bank_deposit_date=old_instance.bank_deposit_date,
+#             balance=old_instance.balance,
+#             bank_transaction_detail=old_instance.bank_transaction_detail,
+#             debit=old_instance.debit,
+#             credit=old_instance.credit,
+#             system_voucher_no=old_instance.system_voucher_no,
+#             system_amount=old_instance.system_amount,
+#             policy_no=old_instance.policy_no,
+#             remarks=old_instance.remarks,
+#             branch=old_instance.branch,
+#             source=old_instance.source,
+#             changed_by=instance.created_by,
+#             changed_at=timezone.now(),
+#             action='UPDATE'
+#         )
+#
+#
+# @receiver(pre_delete, sender='statement_tracker.BankStatement')
+# def create_history_on_delete(sender, instance, **kwargs):
+#     """Signal for tracking the delete of objects"""
+#     BankStatementChangeHistory.objects.create(
+#         bank_statement=instance,
+#         bank_code=instance.bank_code,
+#         bank_name=instance.bank_name,
+#         bank_account_no=instance.bank_account_no,
+#         bank_deposit_date=instance.bank_deposit_date,
+#         balance=instance.balance,
+#         bank_transaction_detail=instance.bank_transaction_detail,
+#         debit=instance.debit,
+#         credit=instance.credit,
+#         system_voucher_no=instance.system_voucher_no,
+#         system_amount=instance.system_amount,
+#         policy_no=instance.policy_no,
+#         remarks=instance.remarks,
+#         branch=instance.branch,
+#         source=instance.source,
+#         changed_by=instance.created_by,
+#         changed_at=timezone.now(),
+#         action='DELETE'
+#     )

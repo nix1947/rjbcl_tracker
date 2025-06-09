@@ -1,8 +1,10 @@
+from django.utils import timezone
 
 from .models import User, BankStatementChangeHistory
 
 from django.contrib.admin import AdminSite
 from django.utils.translation import gettext_lazy as _
+import copy
 
 
 
@@ -81,11 +83,12 @@ class BankStatementAdmin(admin.ModelAdmin):
         'debit', 'credit', 'balance',
         'system_voucher_no', 'system_amount',
         'policy_no', 'branch', 'source',
-        'created_by', 'created_date', 'export_action_link'
+        'modified_by',
+        'created_by',  'created_date', 'export_action_link'
     )
 
     list_filter = ('branch', 'source', 'bank_name', 'created_date')
-    search_fields = ('bank_account_no', 'system_voucher_no', 'policy_no', 'remarks', 'bank_name', 'bank_code')
+    search_fields = ( 'policy_no', 'bank_transaction_detail','credit', 'bank_deposit_date', 'source','bank_account_no', 'system_voucher_no', 'balance', 'remarks', 'bank_name', 'bank_code')
     ordering = ('-created_date',)
     date_hierarchy = 'created_date'
     list_per_page = 50
@@ -182,6 +185,61 @@ class BankStatementAdmin(admin.ModelAdmin):
     def export_single_record(self, request, object_id):
         queryset = self.get_queryset(request).filter(pk=object_id)
         return self.export_as_csv_response(queryset, filename="bank_statement.csv")
+
+    def save_model(self, request, obj, form, change):
+        if change:
+            obj.modified_by = request.user  # ✅ set current user
+            old_instance = copy.deepcopy(BankStatement.objects.get(pk=obj.pk))
+
+        super().save_model(request, obj, form, change)
+
+        if change:
+            BankStatementChangeHistory.objects.create(
+                bank_statement=obj,
+                bank_code=old_instance.bank_code,
+                bank_name=old_instance.bank_name,
+                bank_account_no=old_instance.bank_account_no,
+                bank_deposit_date=old_instance.bank_deposit_date,
+                balance=old_instance.balance,
+                bank_transaction_detail=old_instance.bank_transaction_detail,
+                debit=old_instance.debit,
+                credit=old_instance.credit,
+                system_voucher_no=old_instance.system_voucher_no,
+                system_amount=old_instance.system_amount,
+                policy_no=old_instance.policy_no,
+                remarks=old_instance.remarks,
+                branch=old_instance.branch,
+                source=old_instance.source,
+                changed_by=request.user,  # ✅ current admin user
+                changed_at=timezone.now(),
+                action='UPDATE'
+            )
+
+    def delete_model(self, request, obj):
+        old_instance = copy.deepcopy(obj)
+
+        BankStatementChangeHistory.objects.create(
+            bank_statement=obj,
+            bank_code=old_instance.bank_code,
+            bank_name=old_instance.bank_name,
+            bank_account_no=old_instance.bank_account_no,
+            bank_deposit_date=old_instance.bank_deposit_date,
+            balance=old_instance.balance,
+            bank_transaction_detail=old_instance.bank_transaction_detail,
+            debit=old_instance.debit,
+            credit=old_instance.credit,
+            system_voucher_no=old_instance.system_voucher_no,
+            system_amount=old_instance.system_amount,
+            policy_no=old_instance.policy_no,
+            remarks=old_instance.remarks,
+            branch=old_instance.branch,
+            source=old_instance.source,
+            changed_by=request.user,  # ✅ current admin user
+            changed_at=timezone.now(),
+            action='DELETE'
+        )
+
+        super().delete_model(request, obj)
 
 
 
