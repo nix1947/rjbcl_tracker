@@ -84,7 +84,7 @@ class BankStatementAdmin(admin.ModelAdmin):
         'system_voucher_no', 'system_amount',
         'policy_no', 'branch', 'source',
         'modified_by',
-        'created_by',  'created_date', 'export_action_link'
+        'created_by', 'bank_voucher', 'created_date', 'export_action_link'
     )
 
     list_filter = ('branch', 'source', 'bank_name', 'created_date')
@@ -99,7 +99,7 @@ class BankStatementAdmin(admin.ModelAdmin):
             'fields': (
                 'bank_code', 'bank_name', 'bank_account_no',
                 'bank_deposit_date', 'bank_transaction_detail',
-                'debit', 'credit', 'balance',
+                'debit', 'credit', 'balance', 'bank_voucher'
             )
         }),
         ('System Information', {
@@ -270,6 +270,7 @@ class BankStatementAdmin(admin.ModelAdmin):
                         bank_name = row['bank_name'].strip()
                         bank_account_no = row['bank_account_no'].strip()
                         bank_deposit_date = datetime.strptime(row['bank_deposit_date'].strip(), '%Y-%m-%d').date()
+                        bank_transaction_detail = row['bank_transaction_detail'].strip()
                         debit = float(row.get('debit', 0) or 0)
                         credit = float(row.get('credit', 0) or 0)
                         balance = float(row.get('balance', 0) or 0)
@@ -291,6 +292,7 @@ class BankStatementAdmin(admin.ModelAdmin):
                             bank_name=bank_name,
                             bank_account_no=bank_account_no,
                             bank_deposit_date=bank_deposit_date,
+                            bank_transaction_detail = bank_transaction_detail,
                             debit=debit,
                             credit=credit,
                             balance=balance,

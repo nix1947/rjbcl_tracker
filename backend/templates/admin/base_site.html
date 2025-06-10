@@ -1,4 +1,11 @@
 {% extends "admin/base.html" %}
+{% load static %}
+
+
+{% block extrastyle %}
+    <link rel="stylesheet" type="text/css" href="{% static 'css/custom.css' %}">
+{% endblock %}
+
 
 {% block title %}{% if subtitle %}{{ subtitle }} | {% endif %}{{ title }} | राष्ट्रिय जीवन बीमा कं लि{% endblock %}
 

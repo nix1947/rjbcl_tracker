@@ -1,15 +1,15 @@
-/* Change login page background */
-.login {
-    background: #f8f9fa;
+/* Change header background */
+#header {
+    background-color: #2d2d2d;  /* Dark grey */
 }
 
-/* Style the header */
-#header {
-    background: #006600; /* Green color often used in insurance */
+/* Change module headers */
+.module h2 {
+    background-color: #5a9;  /* Soft green */
     color: white;
 }
 
-/* Style the submit button */
-.submit-row input {
-    background: #006600;
+/* Change overall background */
+body {
+  background: red;
 }
