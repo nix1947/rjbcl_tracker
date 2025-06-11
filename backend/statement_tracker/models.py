@@ -156,16 +156,16 @@ class BankStatement(models.Model):
     bank_name = models.CharField(max_length=255, help_text="Bank name")
     bank_account_no = models.CharField(max_length=255, null=True, help_text="Bank account number")
     bank_deposit_date = models.DateField(null=True, blank=True, help_text="Bank deposit date")
-    balance = models.CharField(max_length=20, default="0", help_text="Bank balance stored as text")
+    balance = models.CharField(max_length=255, default="0", help_text="Bank balance stored as text")
     bank_transaction_detail= models.CharField(max_length=255, null=True, help_text="Bank transaction detail")
-    debit = models.CharField(max_length=10, default="0", null=True, blank=True, help_text="Debit amount")
-    credit = models.CharField(max_length=10, default="0", null=True, blank=True, help_text="Credit amount")
+    debit = models.CharField(max_length=255, default="0", null=True, blank=True, help_text="Debit amount")
+    credit = models.CharField(max_length=255, default="0", null=True, blank=True, help_text="Credit amount")
     system_voucher_no = models.CharField(max_length=255, blank=True, null=True, help_text="System voucher number (e.g., RP300181820000001)")
-    system_amount = models.CharField(max_length=10, default="0", null=True, blank=True, help_text="System amount")
+    system_amount = models.CharField(max_length=255, default="0", null=True, blank=True, help_text="System amount")
     policy_no = models.CharField(max_length=500, null=True, help_text="Policy number(s), e.g., 2156, 2122")
     remarks = models.TextField(blank=True, null=True, help_text="Remarks")
     branch = models.CharField(max_length=255, choices=BRANCH_CHOICES, null=True, blank=True, help_text="Receipt Issue From Branch")
-    source = models.CharField(max_length=50, choices=SOURCE_TYPES, null=True, blank=True, help_text="Transaction Source")
+    source = models.CharField(max_length=255, choices=SOURCE_TYPES, null=True, blank=True, help_text="Transaction Source")
     bank_voucher = models.FileField(
         upload_to='vouchers/',
         blank=True,
@@ -208,20 +208,20 @@ class BankStatementChangeHistory(models.Model):
     bank_name = models.CharField(max_length=255, help_text="Bank name")
     bank_account_no = models.CharField(max_length=255, null=True, help_text="Bank account number")
     bank_deposit_date = models.DateField(null=True, blank=True, help_text="Bank deposit date")
-    balance = models.CharField(max_length=10, null=True, blank=True, help_text="Bank balance")
+    balance = models.CharField(max_length=255, null=True, blank=True, help_text="Bank balance")
     bank_transaction_detail = models.CharField(max_length=255, null=True, help_text="Bank transaction detail")
-    debit = models.CharField(max_length=10, null=True, blank=True, help_text="Debit amount")
-    credit = models.CharField(max_length=10, null=True, blank=True, help_text="Credit amount")
+    debit = models.CharField(max_length=255, null=True, blank=True, help_text="Debit amount")
+    credit = models.CharField(max_length=255, null=True, blank=True, help_text="Credit amount")
     system_voucher_no = models.CharField(max_length=255, blank=True, null=True, help_text="System voucher number")
-    system_amount = models.CharField(max_length=10, null=True, blank=True, help_text="System amount")
+    system_amount = models.CharField(max_length=255, null=True, blank=True, help_text="System amount")
     policy_no = models.CharField(max_length=500, null=True, help_text="Policy number(s)")
     remarks = models.TextField(blank=True, null=True, help_text="Remarks")
     branch = models.CharField(max_length=255, null=True, blank=True, help_text="Receipt Issue From Branch")
-    source = models.CharField(max_length=50, null=True, blank=True, help_text="Transaction Source")
+    source = models.CharField(max_length=255, null=True, blank=True, help_text="Transaction Source")
 
     changed_by = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.PROTECT)
     changed_at = models.DateTimeField(default=timezone.now, editable=False)
-    action = models.CharField(max_length=10, choices=ACTION_CHOICES, help_text="Change action type")
+    action = models.CharField(max_length=255, choices=ACTION_CHOICES, help_text="Change action type")
 
     class Meta:
         ordering = ['-changed_at']
