@@ -72,10 +72,25 @@ class CSVUploadForm(forms.Form):
     csv_file = forms.FileField()
 
 
+class BankTransactionForm(forms.ModelForm):
+    balance = forms.DecimalField(max_digits=10, decimal_places=2, required=False)
+    debit = forms.DecimalField(max_digits=10, decimal_places=2, required=False)
+    credit = forms.DecimalField(max_digits=10, decimal_places=2, required=False)
+    system_amount = forms.DecimalField(max_digits=10, decimal_places=2, required=False)
+
+    class Meta:
+        model = BankStatement
+        fields = '__all__'
+
+
+
 @admin.register(BankStatement)
 class BankStatementAdmin(admin.ModelAdmin):
+
     # Template for bulk upload csv
     change_list_template = "admin/bankstatement_changelist.html"
+    form = BankTransactionForm
+
 
     list_display = (
         'bank_code', 'bank_name', 'bank_account_no',
@@ -92,7 +107,21 @@ class BankStatementAdmin(admin.ModelAdmin):
     ordering = ('-created_date',)
     date_hierarchy = 'created_date'
     list_per_page = 50
-    readonly_fields = ('created_by', 'created_date')
+
+    def get_readonly_fields(self, request, obj=None):
+        # List of fields to make read-only
+        read_only_fields = [
+            'bank_code', 'bank_name', 'bank_account_no',
+            'bank_deposit_date', 'bank_transaction_detail',
+            'debit', 'credit', 'balance', 'bank_voucher', 'created_by', 'created_date'
+        ]
+
+        # If user is superuser, return no readonly fields
+        if request.user.is_superuser:
+            return ['created_by', 'created_date']
+
+        # Otherwise, make all fields in the fieldset read-only
+        return read_only_fields
 
     fieldsets = (
         ('Bank Details', {

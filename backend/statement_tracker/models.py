@@ -156,12 +156,12 @@ class BankStatement(models.Model):
     bank_name = models.CharField(max_length=255, help_text="Bank name")
     bank_account_no = models.CharField(max_length=255, null=True, help_text="Bank account number")
     bank_deposit_date = models.DateField(null=True, blank=True, help_text="Bank deposit date")
-    balance = models.DecimalField(max_digits=10, decimal_places=2, help_text="Bank balance")
+    balance = models.CharField(max_length=20, default="0", help_text="Bank balance stored as text")
     bank_transaction_detail= models.CharField(max_length=255, null=True, help_text="Bank transaction detail")
-    debit = models.DecimalField(max_digits=10, decimal_places=2, null=True, blank=True, help_text="Debit amount")
-    credit = models.DecimalField(max_digits=10, decimal_places=2, null=True, blank=True, help_text="Credit amount")
+    debit = models.CharField(max_length=10, default="0", null=True, blank=True, help_text="Debit amount")
+    credit = models.CharField(max_length=10, default="0", null=True, blank=True, help_text="Credit amount")
     system_voucher_no = models.CharField(max_length=255, blank=True, null=True, help_text="System voucher number (e.g., RP300181820000001)")
-    system_amount = models.DecimalField(max_digits=10, decimal_places=2, null=True, blank=True, help_text="System amount")
+    system_amount = models.CharField(max_length=10, default="0", null=True, blank=True, help_text="System amount")
     policy_no = models.CharField(max_length=500, null=True, help_text="Policy number(s), e.g., 2156, 2122")
     remarks = models.TextField(blank=True, null=True, help_text="Remarks")
     branch = models.CharField(max_length=255, choices=BRANCH_CHOICES, null=True, blank=True, help_text="Receipt Issue From Branch")
@@ -208,13 +208,12 @@ class BankStatementChangeHistory(models.Model):
     bank_name = models.CharField(max_length=255, help_text="Bank name")
     bank_account_no = models.CharField(max_length=255, null=True, help_text="Bank account number")
     bank_deposit_date = models.DateField(null=True, blank=True, help_text="Bank deposit date")
-    balance = models.DecimalField(max_digits=10, decimal_places=2, help_text="Bank balance")
+    balance = models.CharField(max_length=10, null=True, blank=True, help_text="Bank balance")
     bank_transaction_detail = models.CharField(max_length=255, null=True, help_text="Bank transaction detail")
-    debit = models.DecimalField(max_digits=10, decimal_places=2, null=True, blank=True, help_text="Debit amount")
-    credit = models.DecimalField(max_digits=10, decimal_places=2, null=True, blank=True, help_text="Credit amount")
+    debit = models.CharField(max_length=10, null=True, blank=True, help_text="Debit amount")
+    credit = models.CharField(max_length=10, null=True, blank=True, help_text="Credit amount")
     system_voucher_no = models.CharField(max_length=255, blank=True, null=True, help_text="System voucher number")
-    system_amount = models.DecimalField(max_digits=10, decimal_places=2, null=True, blank=True,
-                                        help_text="System amount")
+    system_amount = models.CharField(max_length=10, null=True, blank=True, help_text="System amount")
     policy_no = models.CharField(max_length=500, null=True, help_text="Policy number(s)")
     remarks = models.TextField(blank=True, null=True, help_text="Remarks")
     branch = models.CharField(max_length=255, null=True, blank=True, help_text="Receipt Issue From Branch")
@@ -228,6 +227,7 @@ class BankStatementChangeHistory(models.Model):
         ordering = ['-changed_at']
         verbose_name = "Bank Statement Change History"
         verbose_name_plural = "Bank Statement Change History"
+
 
     def __str__(self):
         return f"{self.action} - {self.bank_statement} at {self.changed_at} by {self.changed_by}"
