@@ -182,7 +182,7 @@ class BankStatementAdmin(admin.ModelAdmin):
                 'Balance': obj.balance,
                 'Voucher No': obj.system_voucher_no,
                 'System Amount': obj.system_amount,
-                'Policy No': obj.policy_no,
+                'Policy No': str(obj.policy_no),
                 'Remarks': obj.remarks,
                 'Branch': obj.branch,
                 'Source': obj.source,
