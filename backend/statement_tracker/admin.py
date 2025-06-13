@@ -99,10 +99,10 @@ class BankStatementAdmin(admin.ModelAdmin):
         'system_voucher_no', 'system_amount',
         'policy_no', 'branch', 'source',
         'modified_by',
-        'created_by', 'bank_voucher', 'created_date', 'export_action_link'
+        'created_by', 'bank_voucher', 'last_updated', 'created_date', 'export_action_link'
     )
 
-    list_filter = ('branch', 'source', 'bank_name', 'created_date')
+    list_filter = ('branch', 'source', 'bank_name', 'last_updated', 'created_date')
     search_fields = ( 'policy_no', 'bank_transaction_detail','credit', 'bank_deposit_date', 'source','bank_account_no', 'system_voucher_no', 'balance', 'remarks', 'bank_name', 'bank_code')
     ordering = ('-created_date',)
     date_hierarchy = 'created_date'
@@ -113,12 +113,12 @@ class BankStatementAdmin(admin.ModelAdmin):
         read_only_fields = [
             'bank_code', 'bank_name', 'bank_account_no',
             'bank_deposit_date', 'bank_transaction_detail',
-            'debit', 'credit', 'balance', 'bank_voucher', 'created_by', 'created_date'
+            'debit', 'credit', 'balance', 'bank_voucher', 'created_by', 'created_date', 'last_updated'
         ]
 
         # If user is superuser, return no readonly fields
         if request.user.is_superuser:
-            return ['created_by', 'created_date']
+            return ['created_by', 'created_date', 'last_updated']
 
         # Otherwise, make all fields in the fieldset read-only
         return read_only_fields
@@ -136,7 +136,7 @@ class BankStatementAdmin(admin.ModelAdmin):
                 'system_voucher_no', 'system_amount',
                 'policy_no', 'remarks',
                 'branch', 'source',
-                'created_by', 'created_date',
+                'created_by', 'created_date','last_updated'
             )
         }),
     )
@@ -188,6 +188,7 @@ class BankStatementAdmin(admin.ModelAdmin):
                 'Source': obj.source,
                 'Created By': str(obj.created_by),
                 'Created Date': obj.created_date,
+                'Last Updated': obj.last_updated,
             })
         return data
 

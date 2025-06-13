@@ -139,7 +139,6 @@ class BankStatement(models.Model):
         ('dhangadhi', 'धनगढी'),
         ('hetauda', 'हेटौडा'),
         ('bhaktapur', 'भक्तपुर'),
-        ('lalitpur', 'ललितपुर'),
         ('baglung', 'बागलुङ'),
         ('dhankuta', 'धनकुटा'),
         ('birtamod', 'बिर्तामोड'),
@@ -176,7 +175,7 @@ class BankStatement(models.Model):
     created_by = models.ForeignKey(settings.AUTH_USER_MODEL, related_name='bankstatement_createdby', on_delete=models.PROTECT)
     created_date = models.DateTimeField(default=timezone.now, editable=False)
     modified_by = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.PROTECT, blank=True, null=True)
-
+    last_updated = models.DateTimeField(auto_now=True, editable=False)
 
     def __str__(self):
         return f"{self.bank_code} - {self.policy_no or 'N/A'}"
@@ -222,6 +221,8 @@ class BankStatementChangeHistory(models.Model):
     changed_by = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.PROTECT)
     changed_at = models.DateTimeField(default=timezone.now, editable=False)
     action = models.CharField(max_length=255, choices=ACTION_CHOICES, help_text="Change action type")
+    last_updated = models.DateTimeField(auto_now=True, editable=False)
+
 
     class Meta:
         ordering = ['-changed_at']
