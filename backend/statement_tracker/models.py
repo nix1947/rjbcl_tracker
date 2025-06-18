@@ -145,6 +145,7 @@ class BankStatement(models.Model):
         ('narayangadh', 'नारायणगढ'),
         ('ghorahi', 'घोराही'),
         ('janakpur', 'जनकपुर'),
+        ('surkhet', 'सुर्खेत'),
     ]
 
     def validate_file_size(file):
