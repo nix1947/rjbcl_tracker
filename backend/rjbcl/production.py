@@ -15,6 +15,9 @@ DATABASES = {
         'PASSWORD': os.getenv('MYSQL_PASSWORD') or '',      # From environment variables
         'HOST': 'localhost',                       # MySQL host
         'PORT': '3306',                            # Default MySQL port
-        # No additional options
+        'OPTIONS': {
+            'charset': 'utf8mb4',
+            'init_command': "SET NAMES 'utf8mb4'",
+        },
     }
 }
