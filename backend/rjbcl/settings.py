@@ -50,10 +50,15 @@ INSTALLED_APPS = [
     'rest_framework',
     'rest_framework_simplejwt',
     'drf_yasg', # for swagger
+    'crispy_forms',
+    'crispy_bootstrap5',
 
     
     # Custom app
-    'statement_tracker'
+    'statement_tracker',
+    'user_request_app',
+
+    # 'kyc',
 ]
 
 MIDDLEWARE = [
@@ -166,4 +171,6 @@ STATICFILES_DIRS = [
     os.path.join(BASE_DIR, 'static'),  # Your additional static directories
 ]
 
-
+# Crispy forms dependencies
+CRISPY_ALLOWED_TEMPLATE_PACKS = "bootstrap5"
+CRISPY_TEMPLATE_PACK = "bootstrap5"

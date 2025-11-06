@@ -188,7 +188,7 @@ class BankStatement(models.Model):
 
     class Meta:
         verbose_name = "Bank Statement"
-        verbose_name_plural = "Bank Statements"
+        verbose_name_plural = "Bank Statements Reconciliation"
         ordering = ['-created_date']
         constraints = [
             models.UniqueConstraint(fields=['bank_code', 'balance', 'credit', 'bank_deposit_date'],
