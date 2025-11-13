@@ -242,8 +242,8 @@ class UserRequestAdmin(admin.ModelAdmin):
         personal_data = [
             ['Field', 'Value', 'Field', 'Value'],
             ['First Name', user_request.first_name, 'Middle Name', user_request.middle_name or 'N/A'],
-            ['Last Name', user_request.last_name, 'Gender', user_request.gender()],
-            ['Email', user_request.email, 'Nationality', user_request.nationality()],
+            ['Last Name', user_request.last_name, 'Gender', user_request.gender],
+            ['Email', user_request.email, 'Nationality', user_request.nationality],
             ['Phone No', user_request.phone_no, 'Mobile No', user_request.mobile_no],
             ['SSN', user_request.ssn or 'N/A', '', ''],
         ]
@@ -262,7 +262,7 @@ class UserRequestAdmin(admin.ModelAdmin):
             ['Document Type', user_request.document_type, 'Designation',
              user_request.designation()],
             ['Citizen No', user_request.citizen_no, 'Branch', user_request.department.name],
-            ['Province', user_request.province() or 'N/A', 'Contact Email', user_request.contact_email],
+            ['Province', user_request.province or 'N/A', 'Contact Email', user_request.email],
         ]
 
         doc_office_table = Table(doc_office_data,
