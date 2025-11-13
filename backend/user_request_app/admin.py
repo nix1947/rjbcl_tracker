@@ -226,7 +226,7 @@ class UserRequestAdmin(admin.ModelAdmin):
             ['Field', 'Value', 'Field', 'Value'],
             ['Request ID', str(user_request.request_id), 'Request Date',
              user_request.request_date.strftime('%Y-%m-%d')],
-            ['Requested By', requested_by_name, 'Department', user_request.department()],
+            ['Requested By', requested_by_name, 'Department', user_request.department.name],
             ['Request Type', user_request.request_type(), 'Status', user_request.status],
         ]
 
@@ -261,7 +261,7 @@ class UserRequestAdmin(admin.ModelAdmin):
             ['Field', 'Value', 'Field', 'Value'],
             ['Document Type', user_request.document_type, 'Designation',
              user_request.designation()],
-            ['Citizen No', user_request.citizen_no, 'Branch', user_request.department],
+            ['Citizen No', user_request.citizen_no, 'Branch', user_request.department.name],
             ['Province', user_request.province() or 'N/A', 'Contact Email', user_request.contact_email],
         ]
 
