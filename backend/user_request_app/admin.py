@@ -260,7 +260,7 @@ class UserRequestAdmin(admin.ModelAdmin):
         doc_office_data = [
             ['Field', 'Value', 'Field', 'Value'],
             ['Document Type', user_request.document_type, 'Designation',
-             user_request.designation()],
+             user_request.designation],
             ['Citizen No', user_request.citizen_no, 'Branch', user_request.department.name],
             ['Province', user_request.province or 'N/A', 'Contact Email', user_request.email],
         ]
