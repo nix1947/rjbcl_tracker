@@ -87,7 +87,7 @@ class UserRequestAdmin(admin.ModelAdmin):
 
         ('Document Information', {
             'fields': (
-                'document_type', 'citizen_no', 'branch', 'province'
+                'document_type', 'citizen_no', 'province'
             )
         }),
         ('Office Information', {
