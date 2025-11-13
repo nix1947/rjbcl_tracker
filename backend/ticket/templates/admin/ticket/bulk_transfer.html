@@ -1,0 +1,56 @@
+{% extends "admin/base_site.html" %}
+{% load i18n %}
+
+{% block content %}
+<div id="content-main">
+    <h1>{{ title }}</h1>
+
+    <p>The following tickets will be transferred:</p>
+
+    <div class="module">
+        <table>
+            <thead>
+                <tr>
+                    <th>Ticket Number</th>
+                    <th>Title</th>
+                    <th>Current Department</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for ticket in tickets %}
+                <tr>
+                    <td>{{ ticket.ticket_number }}</td>
+                    <td>{{ ticket.title }}</td>
+                    <td>{{ ticket.department.name }}</td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+
+    <form method="post">
+        {% csrf_token %}
+
+        <div class="form-row">
+            {{ form.department.label_tag }}
+            {{ form.department }}
+            {% if form.department.errors %}
+                <div class="error">{{ form.department.errors }}</div>
+            {% endif %}
+        </div>
+
+        <div class="form-row">
+            {{ form.notes.label_tag }}
+            {{ form.notes }}
+            {% if form.notes.errors %}
+                <div class="error">{{ form.notes.errors }}</div>
+            {% endif %}
+        </div>
+
+        <div class="submit-row">
+            <input type="submit" value="Transfer Selected Tickets" name="apply" class="default">
+            <a href="{% url 'admin:tickets_ticket_changelist' %}" class="button">Cancel</a>
+        </div>
+    </form>
+</div>
+{% endblock %}

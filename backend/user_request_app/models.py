@@ -4,11 +4,11 @@ from django.db import models
 from django.db import models
 from django.conf import settings
 from rjbcl.common_data import (
-    DEPARTMENTS, GENDER_CHOICES, NATIONALITY_CHOICES, DOCUMENT_TYPE_CHOICES,
-    PROVINCE_CHOICES, DESIGNATION_CHOICES, BRANCH_CHOICES
+    GENDER_CHOICES, NATIONALITY_CHOICES, DOCUMENT_TYPE_CHOICES,
+    PROVINCE_CHOICES, DESIGNATION_CHOICES
 
 )
-
+from ticket.models import  Department
 
 class MenuItem(models.Model):
     """Represents all available system modules or permissions."""
@@ -42,10 +42,13 @@ class UserRequest(models.Model):
     request_id = models.AutoField(primary_key=True)
     request_date = models.DateField(auto_now_add=True)
     requested_by = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE, related_name='requests_made')
-    department = models.CharField(
-        max_length=100,
-        choices=DEPARTMENTS,
-        default='Administration',
+    department = models.ForeignKey(
+        Department,
+        on_delete=models.SET_NULL,
+        blank=True,
+        null=True,
+        related_name="tickets",
+        help_text="New user Department or branch"
     )
 
     first_name = models.CharField(max_length=50)
@@ -61,7 +64,6 @@ class UserRequest(models.Model):
     # --- Document Information ---
     document_type = models.CharField(max_length=50, choices=DOCUMENT_TYPE_CHOICES, default='Citizen')
     citizen_no = models.CharField(max_length=50)
-    branch = models.CharField(max_length=100, choices=BRANCH_CHOICES)
     province = models.CharField(max_length=50, choices=PROVINCE_CHOICES, blank=True, null=True)
 
     # --- Office Information ---
@@ -86,7 +88,7 @@ class UserRequest(models.Model):
     memo_reference_no = models.CharField(max_length=50, blank=True, null=True)
     memo_date = models.DateField(blank=True, null=True)
     memo_subject = models.CharField(max_length=200, blank=True, null=True)
-    approval_form = models.FileField()
+    approval_form = models.FileField(blank=True, null=True)
 
 
     # approval and status

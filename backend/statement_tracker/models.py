@@ -1,13 +1,13 @@
 # models.py
 from django.db import models
 from django.contrib.auth.models import AbstractBaseUser, BaseUserManager, PermissionsMixin
-from django.db.models.signals import pre_delete, pre_save
-from django.dispatch import receiver
 from django.utils import timezone
 from django.utils.translation import gettext_lazy as _
 import re
 from django.conf import settings
 from django.core.exceptions import ValidationError
+from rjbcl.common_data import DESIGNATION_CHOICES
+from ticket.models import Department
 
 
 
@@ -43,7 +43,19 @@ class User(AbstractBaseUser, PermissionsMixin):
     mobile = models.CharField(max_length=20, blank=True, null=True)
     is_active = models.BooleanField(default=True)
     is_staff = models.BooleanField(default=False)
+    is_global = models.BooleanField(default=False)
+    is_it_dept = models.BooleanField(default=False)
     date_joined = models.DateTimeField(default=timezone.now)
+    user_level = models.CharField(max_length=255, choices=DESIGNATION_CHOICES, null=True, blank=True)
+    department = models.ForeignKey(
+        Department,
+        help_text="Your Current Dept or Branch",
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name='users',
+
+    )
 
     objects = CustomUserManager()
 

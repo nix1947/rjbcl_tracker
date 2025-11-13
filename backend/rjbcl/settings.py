@@ -57,6 +57,7 @@ INSTALLED_APPS = [
     # Custom app
     'statement_tracker',
     'user_request_app',
+    'ticket'
 
     # 'kyc',
 ]

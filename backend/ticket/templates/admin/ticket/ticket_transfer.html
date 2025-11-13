@@ -1,0 +1,46 @@
+{% extends "admin/base_site.html" %}
+{% load i18n %}
+
+{% block content %}
+<div id="content-main">
+    <h1>{{ title }}</h1>
+
+    <div class="module">
+        <table>
+            <tr>
+                <td><strong>Ticket:</strong></td>
+                <td>{{ ticket.ticket_number }} - {{ ticket.title }}</td>
+            </tr>
+            <tr>
+                <td><strong>Current Department:</strong></td>
+                <td>{{ ticket.department.name }}</td>
+            </tr>
+        </table>
+    </div>
+
+    <form method="post">
+        {% csrf_token %}
+
+        <div class="form-row">
+            {{ form.department.label_tag }}
+            {{ form.department }}
+            {% if form.department.errors %}
+                <div class="error">{{ form.department.errors }}</div>
+            {% endif %}
+        </div>
+
+        <div class="form-row">
+            {{ form.notes.label_tag }}
+            {{ form.notes }}
+            {% if form.notes.errors %}
+                <div class="error">{{ form.notes.errors }}</div>
+            {% endif %}
+        </div>
+
+        <div class="submit-row">
+            <input type="submit" value="Transfer Ticket" class="default">
+            <a href="{% url 'admin:tickets_ticket_changelist' %}" class="button">Cancel</a>
+        </div>
+    </form>
+</div>
+{% endblock %}
