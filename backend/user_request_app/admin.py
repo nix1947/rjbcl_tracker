@@ -227,7 +227,7 @@ class UserRequestAdmin(admin.ModelAdmin):
             ['Request ID', str(user_request.request_id), 'Request Date',
              user_request.request_date.strftime('%Y-%m-%d')],
             ['Requested By', requested_by_name, 'Department', user_request.department.name],
-            ['Request Type', user_request.request_type(), 'Status', user_request.status],
+            ['Request Type', user_request.request_type, 'Status', user_request.status],
         ]
 
         request_table = Table(request_data,
