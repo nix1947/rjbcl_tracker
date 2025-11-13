@@ -445,7 +445,7 @@ class UserRequestAdmin(admin.ModelAdmin):
         approval_info_data = [
             ['Field', 'Value'],
             ['Recommended By', approved_by_name],
-            ['Approval Date', user_request.approval_date.strftime('%Y-%m-%d') if user_request.approval_date else 'N/A'],
+            ['Approval Date', '____________________'],
         ]
         approval_info_table = Table(approval_info_data, colWidths=[1.8 * inch, 5.2 * inch])  # Increased widths
         approval_info_table.setStyle(grid_style)
