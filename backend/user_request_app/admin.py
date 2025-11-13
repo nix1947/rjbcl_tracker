@@ -226,8 +226,8 @@ class UserRequestAdmin(admin.ModelAdmin):
             ['Field', 'Value', 'Field', 'Value'],
             ['Request ID', str(user_request.request_id), 'Request Date',
              user_request.request_date.strftime('%Y-%m-%d')],
-            ['Requested By', requested_by_name, 'Department', user_request.get_department_display()],
-            ['Request Type', user_request.get_request_type_display(), 'Status', user_request.get_status_display()],
+            ['Requested By', requested_by_name, 'Department', user_request.department()],
+            ['Request Type', user_request.request_type(), 'Status', user_request.status],
         ]
 
         request_table = Table(request_data,
@@ -242,8 +242,8 @@ class UserRequestAdmin(admin.ModelAdmin):
         personal_data = [
             ['Field', 'Value', 'Field', 'Value'],
             ['First Name', user_request.first_name, 'Middle Name', user_request.middle_name or 'N/A'],
-            ['Last Name', user_request.last_name, 'Gender', user_request.get_gender_display()],
-            ['Email', user_request.email, 'Nationality', user_request.get_nationality_display()],
+            ['Last Name', user_request.last_name, 'Gender', user_request.gender()],
+            ['Email', user_request.email, 'Nationality', user_request.nationality()],
             ['Phone No', user_request.phone_no, 'Mobile No', user_request.mobile_no],
             ['SSN', user_request.ssn or 'N/A', '', ''],
         ]
@@ -259,10 +259,10 @@ class UserRequestAdmin(admin.ModelAdmin):
 
         doc_office_data = [
             ['Field', 'Value', 'Field', 'Value'],
-            ['Document Type', user_request.get_document_type_display(), 'Designation',
-             user_request.get_designation_display()],
-            ['Citizen No', user_request.citizen_no, 'Branch', user_request.branch],
-            ['Province', user_request.get_province_display() or 'N/A', 'Contact Email', user_request.contact_email],
+            ['Document Type', user_request.document_type, 'Designation',
+             user_request.designation()],
+            ['Citizen No', user_request.citizen_no, 'Branch', user_request.department],
+            ['Province', user_request.province() or 'N/A', 'Contact Email', user_request.contact_email],
         ]
 
         doc_office_table = Table(doc_office_data,

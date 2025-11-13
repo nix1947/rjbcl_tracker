@@ -21,30 +21,15 @@ class Department(models.Model):
 
 
 class Category(models.Model):
-    CATEGORY_CHOICES = [
-        ('Core System', 'Core System'),
-        ('CRM', 'CRM'),
-        ('Payment Gateway', 'Payment Gateway'),
-        ('Document Management', 'Document Management'),
-        ('Analytics', 'Analytics'),
-        ('Other', 'Other'),
-        ('Toner Refill', 'Toner Refill'),
-        ('Computer Maintenance', 'Computer Maintenance'),
-        ('Electricity', 'Electricity'),
-        ('Printer Maintenance', 'Printer Maintenance'),
-        ('Network', 'Network'),
-        ('Software', 'Software'),
-        ('Hardware', 'Hardware'),
-    ]
+
 
     id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
     name = models.CharField(max_length=100)
-    category_type = models.CharField(max_length=50, choices=CATEGORY_CHOICES)
     is_active = models.BooleanField(default=True)
     description = models.TextField(blank=True, null=True)
 
     def __str__(self):
-        return f"{self.name} ({self.category_type})"
+        return f"{self.name}"
 
     class Meta:
         verbose_name = "Category Type"

@@ -168,8 +168,8 @@ class CategoryAdminForm(forms.ModelForm):
 @admin.register(Category)
 class CategoryAdmin(admin.ModelAdmin):
     form = CategoryAdminForm
-    list_display = ('name', 'category_type', 'is_active', 'ticket_count')
-    list_filter = ('category_type', 'is_active')
+    list_display = ('name', 'is_active', 'ticket_count')
+    list_filter = ('name', 'is_active')
     search_fields = ('name', 'description')
     list_editable = ('is_active',)
     list_per_page = 20
