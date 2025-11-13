@@ -445,7 +445,7 @@ class UserRequestAdmin(admin.ModelAdmin):
         approval_info_data = [
             ['Field', 'Value'],
             ['Recommended By', approved_by_name],
-            ['Approved By', approved_by_name],
+            ['Approved By', '---------------------'],
             ['Approval Date', '____________________'],
         ]
         approval_info_table = Table(approval_info_data, colWidths=[1.8 * inch, 5.2 * inch])  # Increased widths
