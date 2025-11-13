@@ -446,6 +446,8 @@ class UserRequestAdmin(admin.ModelAdmin):
             ['Field', 'Value'],
             ['Recommended By', approved_by_name],
             ['Approval Date', '____________________'],
+            ['Approved By:', 'CEO/DCEO/CM/DH_________________________'],
+
         ]
         approval_info_table = Table(approval_info_data, colWidths=[1.8 * inch, 5.2 * inch])  # Increased widths
         approval_info_table.setStyle(grid_style)
@@ -457,7 +459,6 @@ class UserRequestAdmin(admin.ModelAdmin):
 
         # Create the approval section with single lines for signatures
         approval_data = [
-            ['Approved By:', '_________________________'],
         ]
 
         approval_table = Table(approval_data, colWidths=[1.5 * inch, 3 * inch])  # Adjusted widths
