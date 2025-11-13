@@ -220,7 +220,7 @@ class UserRequestAdmin(admin.ModelAdmin):
         if callable(requested_by_display):
             requested_by_name = requested_by_display() or request.user.username
         else:
-            requested_by_name = getattr(request.user, 'username', 'Unknown User')
+            requested_by_name = getattr(request.user, 'email', 'Unknown User')
 
         request_data = [
             ['Field', 'Value', 'Field', 'Value'],
@@ -438,13 +438,13 @@ class UserRequestAdmin(admin.ModelAdmin):
             if callable(approved_by_display):
                 approved_by_name = approved_by_display() or user_request.approved_by.username
             else:
-                approved_by_name = getattr(user_request.approved_by, 'username', 'Unknown')
+                approved_by_name = getattr(user_request.approved_by, 'email', 'Unknown')
         else:
             approved_by_name = 'N/A'
 
         approval_info_data = [
             ['Field', 'Value'],
-            ['Approved By', approved_by_name],
+            ['Recommended By', approved_by_name],
             ['Approval Date', user_request.approval_date.strftime('%Y-%m-%d') if user_request.approval_date else 'N/A'],
         ]
         approval_info_table = Table(approval_info_data, colWidths=[1.8 * inch, 5.2 * inch])  # Increased widths
