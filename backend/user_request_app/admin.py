@@ -445,9 +445,8 @@ class UserRequestAdmin(admin.ModelAdmin):
         approval_info_data = [
             ['Field', 'Value'],
             ['Recommended By', approved_by_name],
+            ['Approved By', approved_by_name],
             ['Approval Date', '____________________'],
-            ['Approved By:', 'CEO/DCEO/CM/DH_________________________'],
-
         ]
         approval_info_table = Table(approval_info_data, colWidths=[1.8 * inch, 5.2 * inch])  # Increased widths
         approval_info_table.setStyle(grid_style)
@@ -457,20 +456,6 @@ class UserRequestAdmin(admin.ModelAdmin):
         # Approved By Section - Single line format
         story.append(Spacer(1, 0.3 * inch))
 
-        # Create the approval section with single lines for signatures
-        approval_data = [
-        ]
-
-        approval_table = Table(approval_data, colWidths=[1.5 * inch, 3 * inch])  # Adjusted widths
-        approval_table.setStyle(TableStyle([
-            ('ALIGN', (0, 0), (-1, -1), 'LEFT'),
-            ('FONTNAME', (0, 0), (-1, -1), 'Helvetica'),
-            ('FONTSIZE', (0, 0), (-1, -1), 9),
-            ('VALIGN', (0, 0), (-1, -1), 'MIDDLE'),
-            ('BOTTOMPADDING', (0, 0), (-1, -1), 12),
-            ('TOPPADDING', (0, 0), (-1, -1), 12),
-        ]))
-        story.append(approval_table)
 
         # Build PDF
         doc.build(story)
