@@ -31,20 +31,20 @@ from django.contrib.auth.admin import UserAdmin as BaseUserAdmin
 
 class UserAdmin(BaseUserAdmin):
     model = User
-    list_display = ('email', 'username', 'full_name', 'mobile', 'is_staff', 'is_active', 'date_joined')
-    list_filter = ('is_staff', 'is_active', 'date_joined')
-    search_fields = ('email', 'username', 'full_name', 'mobile')
+    list_display = ('email', 'username', 'full_name', 'department', 'is_it_dept', 'is_global', 'mobile', 'is_staff', 'is_active', 'date_joined')
+    list_filter = ('is_staff', 'department','is_active', 'date_joined')
+    search_fields = ('email', 'department', 'username', 'full_name', 'mobile')
     ordering = ('-date_joined',)
     fieldsets = (
         (None, {'fields': ('email', 'password')}),
-        ('Personal info', {'fields': ('username', 'full_name', 'mobile')}),
+        ('Personal info', {'fields': ('username', 'full_name', 'is_it_dept', 'is_global', 'mobile', 'department')}),
         ('Permissions', {'fields': ('is_active', 'is_staff', 'is_superuser', 'groups', 'user_permissions')}),
         ('Important dates', {'fields': ('last_login', 'date_joined')}),
     )
     add_fieldsets = (
         (None, {
             'classes': ('wide',),
-            'fields': ('email', 'username', 'full_name', 'mobile', 'password1', 'password2', 'is_staff', 'is_superuser', 'is_active'),
+            'fields': ('email', 'username', 'full_name', 'is_it_dept', 'is_global', 'mobile', 'password1', 'password2', 'is_staff', 'is_superuser', 'is_active'),
         }),
     )
 

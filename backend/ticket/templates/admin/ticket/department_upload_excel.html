@@ -1,0 +1,52 @@
+{% extends "admin/base_site.html" %}
+{% load i18n %}
+
+{% block content %}
+<div id="content-main">
+    <h1>Upload Departments from Excel</h1>
+
+    <div class="module">
+        <p>Upload an Excel file to create multiple departments at once.</p>
+        <p><strong>Required column:</strong> <code>name</code></p>
+        <p><strong>Optional column:</strong> <code>is_branch</code> (True/False, Yes/No, 1/0)</p>
+        <p><strong>Note:</strong> Existing departments with the same name will be skipped automatically.</p>
+
+        <form method="post" enctype="multipart/form-data">
+            {% csrf_token %}
+            <div class="form-row">
+                <label for="excel_file">Excel File:</label>
+                <input type="file" name="excel_file" accept=".xlsx,.xls" required>
+            </div>
+            <div class="submit-row">
+                <input type="submit" value="Upload" class="default">
+                <!-- Updated cancel URL -->
+                <a href="{% url 'admin:ticket_department_changelist' %}" class="button">Cancel</a>
+            </div>
+        </form>
+
+        <h3>Example Excel format:</h3>
+        <table>
+            <thead>
+                <tr>
+                    <th>name</th>
+                    <th>is_branch</th>
+                </tr>
+            </thead>
+            <tbody>
+                <tr>
+                    <td>IT Support</td>
+                    <td>False</td>
+                </tr>
+                <tr>
+                    <td>New York Branch</td>
+                    <td>True</td>
+                </tr>
+                <tr>
+                    <td>HR Department</td>
+                    <td></td>
+                </tr>
+            </tbody>
+        </table>
+    </div>
+</div>
+{% endblock %}

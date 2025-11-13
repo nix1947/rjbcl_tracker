@@ -5,18 +5,20 @@ from django.urls import reverse
 from django.utils import timezone
 from django.db.models import Count, Q
 from django import forms
-from django.http import HttpResponseRedirect
 from .models import (
     Department, Category, Ticket, TicketDiscussion,
     TicketStatusHistory, ChangeRequestWorkflow, DepartmentTransfer
 )
-
+from django.shortcuts import render, redirect
+from django.contrib import messages
+from django.urls import path
+from django.db.models import Count
+import pandas as pd
 
 class DepartmentAdminForm(forms.ModelForm):
     class Meta:
         model = Department
         fields = '__all__'
-
 
 @admin.register(Department)
 class DepartmentAdmin(admin.ModelAdmin):
@@ -26,23 +28,136 @@ class DepartmentAdmin(admin.ModelAdmin):
     search_fields = ('name', 'description')
     list_per_page = 20
 
+    # Disable delete functionality
+    def has_delete_permission(self, request, obj=None):
+        return False
+
+    # Add permission controls for change and create
+    def has_add_permission(self, request):
+        return request.user.is_authenticated and (
+            getattr(request.user, 'is_it_dept', False) or
+            getattr(request.user, 'is_global', False)
+        )
+
+    def has_change_permission(self, request, obj=None):
+        return request.user.is_authenticated and (
+            getattr(request.user, 'is_it_dept', False) or
+            getattr(request.user, 'is_global', False)
+        )
+
+    def get_urls(self):
+        urls = super().get_urls()
+        custom_urls = [
+            path('upload-excel/', self.upload_excel, name='department_upload_excel'),
+        ]
+        return custom_urls + urls
+
     def get_queryset(self, request):
+        # Simple annotation for total ticket count only
         return super().get_queryset(request).annotate(
-            ticket_count=Count('tickets'),
-            active_tickets_count=Count('tickets',
-                                       filter=Q(tickets__current_status__in=['Open', 'In Progress', 'Reopened']))
+            ticket_count=Count('tickets')
         )
 
     def ticket_count(self, obj):
-        return obj.ticket_count
+        # Use annotation if available, otherwise count directly
+        if hasattr(obj, 'ticket_count'):
+            return obj.ticket_count
+        try:
+            return obj.tickets.count()
+        except (AttributeError, Exception):
+            return 0
 
     ticket_count.short_description = 'Total Tickets'
 
     def active_tickets(self, obj):
-        return obj.active_tickets_count
+        # Count active tickets directly without complex annotation
+        try:
+            return obj.tickets.filter(current_status__in=['Open', 'In Progress', 'Reopened']).count()
+        except (AttributeError, Exception):
+            return 0
 
     active_tickets.short_description = 'Active Tickets'
 
+    # ADD THIS METHOD - This makes the upload button appear
+    def changelist_view(self, request, extra_context=None):
+        extra_context = extra_context or {}
+        # Only show upload button to authorized users
+        if request.user.is_authenticated and (
+            getattr(request.user, 'is_it_dept', False) or
+            getattr(request.user, 'is_global', False)
+        ):
+            extra_context['show_upload_button'] = True
+        return super().changelist_view(request, extra_context=extra_context)
+
+    def upload_excel(self, request):
+        """Handle Excel file upload for bulk department creation - only name and is_branch"""
+        if not request.user.is_authenticated or not (
+                getattr(request.user, 'is_it_dept', False) or
+                getattr(request.user, 'is_global', False)
+        ):
+            messages.error(request, "You don't have permission to upload Excel files.")
+            return redirect('admin:helpdesk_department_changelist')
+
+        if request.method == 'POST':
+            excel_file = request.FILES.get('excel_file')
+
+            if not excel_file:
+                messages.error(request, "Please select an Excel file to upload.")
+                return render(request, 'admin/ticket/department_upload_excel.html')
+
+            try:
+                # Read Excel file
+                df = pd.read_excel(excel_file)
+
+                # Validate required columns
+                if 'name' not in df.columns:
+                    messages.error(request, "Excel file must contain a 'name' column.")
+                    return render(request, 'admin/ticket/department_upload_excel.html')
+
+                success_count = 0
+                skip_count = 0
+
+                for index, row in df.iterrows():
+                    try:
+                        name = str(row['name']).strip()
+
+                        # Skip empty names
+                        if not name or name == 'nan':
+                            continue
+
+                        # Check if department already exists
+                        if Department.objects.filter(name=name).exists():
+                            skip_count += 1
+                            continue
+
+                        # Get is_branch value (default to False if not present)
+                        is_branch = False
+                        if 'is_branch' in df.columns and not pd.isna(row['is_branch']):
+                            is_branch_value = row['is_branch']
+                            if isinstance(is_branch_value, (bool, int)):
+                                is_branch = bool(is_branch_value)
+                            elif isinstance(is_branch_value, str):
+                                is_branch = is_branch_value.lower() in ('true', 'yes', '1', 't')
+
+                        # Create department
+                        Department.objects.create(
+                            name=name,
+                            is_branch=is_branch
+                        )
+                        success_count += 1
+
+                    except Exception as e:
+                        messages.warning(request, f"Skipped row {index + 2}: {str(e)}")
+
+                messages.success(request,
+                                 f"Successfully created {success_count} departments. Skipped {skip_count} existing departments.")
+                return redirect('admin:ticket_department_changelist')
+
+            except Exception as e:
+                messages.error(request, f"Error processing Excel file: {str(e)}")
+                return render(request, 'admin/ticket/department_upload_excel.html')
+
+        return render(request, 'admin/ticket/department_upload_excel.html')
 
 class CategoryAdminForm(forms.ModelForm):
     class Meta:
