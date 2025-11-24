@@ -52,14 +52,19 @@ INSTALLED_APPS = [
     'drf_yasg', # for swagger
     'crispy_forms',
     'crispy_bootstrap5',
+    'tinymce',
 
     
     # Custom app
     'statement_tracker',
     'user_request_app',
-    'ticket'
+    'ticket',
+    'task_manager',
+    'memo_manager',
+    'assets_manager',
+    'rjbcl_workflow_manager',
 
-    # 'kyc',
+    'kyc',
 ]
 
 MIDDLEWARE = [
@@ -175,3 +180,12 @@ STATICFILES_DIRS = [
 # Crispy forms dependencies
 CRISPY_ALLOWED_TEMPLATE_PACKS = "bootstrap5"
 CRISPY_TEMPLATE_PACK = "bootstrap5"
+
+#TINCYMCE
+TINYMCE_DEFAULT_CONFIG = {
+    "height": 250,  # Approx. 50 rows
+    "width": "100%",
+    "menubar": True,
+    "plugins": "link image preview codesample table lists",
+    "toolbar": "undo redo | bold italic | alignleft aligncenter alignright | bullist numlist | link image | preview codesample",
+}

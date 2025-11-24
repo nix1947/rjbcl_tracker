@@ -294,8 +294,8 @@ class Ticket(models.Model):
         return f"{self.ticket_number} - {self.title}"
 
     class Meta:
-        verbose_name = "Ticket"
-        verbose_name_plural = "Tickets"
+        verbose_name = "Task"
+        verbose_name_plural = "Tasks"
         ordering = ['-created_at']
 
 

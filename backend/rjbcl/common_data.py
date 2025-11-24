@@ -1,3 +1,6 @@
+from datetime import date, timedelta
+from ticket.models import Department
+
 DEPARTMENTS = [
     ('Administration', 'Administration'),
     ('Individual Underwriting', 'Individual Underwriting'),
@@ -100,3 +103,19 @@ STATUS_CHOICES = [
     ('Rejected', 'Rejected'),
     ('Completed', 'Completed'),
 ]
+
+# Choices for Fiscal Year
+FISCAL_YEAR_CHOICES = [
+    ('2081/82', '2081/82 B.S.'),
+    ('2082/83', '2082/83 B.S.'),
+    ('2083/84', '2083/84 B.S.'),
+]
+
+
+def default_deadline():
+    return date.today() + timedelta(days=15)
+
+def get_default_department():
+    default_name = "All"  # Change this to your preferred default
+    department, created = Department.objects.get_or_create(name=default_name)
+    return department

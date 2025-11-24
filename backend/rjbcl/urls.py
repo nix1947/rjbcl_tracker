@@ -47,11 +47,11 @@ urlpatterns = [
 
 
     # kyc app
-    # path('kyc/', include('kyc.urls')),
+    path('kyc/', include('kyc.urls')),
 
 
  # Sample dashboard
- #     path('dashboard/', dashboard, name='dashboard'),
+     path('dashboard/', dashboard, name='dashboard'),
 
 # URLS for swagger
     re_path(r'^swagger(?P<format>\.json|\.yaml)$', schema_view.without_ui(cache_timeout=0), name='schema-json'),
@@ -60,6 +60,7 @@ urlpatterns = [
 
 
     ## Admin related urls
+    path('tinymce/', include('tinymce.urls')),
 
 ]
 

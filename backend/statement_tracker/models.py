@@ -8,6 +8,7 @@ from django.conf import settings
 from django.core.exceptions import ValidationError
 from rjbcl.common_data import DESIGNATION_CHOICES
 from ticket.models import Department
+from rjbcl.common_data import get_default_department
 
 
 
@@ -54,7 +55,7 @@ class User(AbstractBaseUser, PermissionsMixin):
         null=True,
         blank=True,
         related_name='users',
-
+        default=get_default_department
     )
 
     objects = CustomUserManager()
@@ -107,8 +108,11 @@ class User(AbstractBaseUser, PermissionsMixin):
         self.full_clean()
         super().save(*args, **kwargs)
 
+    def get_full_name(self):
+        return self.full_name
+
     def __str__(self):
-        return self.email
+        return self.full_name + "-" + self.email
 
     class Meta:
         verbose_name = 'User'

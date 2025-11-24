@@ -1,4 +1,5 @@
 import pandas as pd
+from django import forms
 from django.contrib import admin, messages
 from django.http import HttpResponse
 from django.shortcuts import redirect, render
@@ -12,9 +13,16 @@ from reportlab.platypus import SimpleDocTemplate, Paragraph, Spacer, Table, Tabl
 from reportlab.lib import colors
 from io import BytesIO
 import textwrap
-
+from django.contrib import admin
+from django.utils.html import format_html
+from django.http import HttpResponse
+from reportlab.pdfgen import canvas
+from reportlab.lib.pagesizes import letter
+from .models import UserAccessRequest
+from ticket.models import Department
 from .forms import UploadExcelForm
 from .models import MenuItem, UserRequest
+from ticket.models import Department
 
 
 class MenuItemAdmin(admin.ModelAdmin):
@@ -27,6 +35,7 @@ class MenuItemAdmin(admin.ModelAdmin):
 
 
 class UserRequestAdmin(admin.ModelAdmin):
+
     list_display = [
         'request_name', 'requested_by', 'department',
         'pdf_download_button', 'approval_form',
@@ -50,14 +59,13 @@ class UserRequestAdmin(admin.ModelAdmin):
     fieldsets = (
         ('Request Information', {
             'fields': (
-                'request_id', 'request_date', 'requested_by',
-                'department', 'request_type', 'status'
+                'department', 'request_type', 'status', 'approval_form',
             )
         }),
         ('Personal Information', {
             'fields': (
                 'first_name', 'middle_name', 'last_name', 'gender',
-                'email', 'phone_no', 'mobile_no', 'ssn', 'nationality'
+                'email', 'mobile_no',
             )
         }),
 
@@ -70,26 +78,11 @@ class UserRequestAdmin(admin.ModelAdmin):
         }),
         ('Request Details', {
             'fields': (
-                'description', 'permissions_requested'
-            )
-        }),
-        ('Memo Information', {
-            'fields': (
-                'memo_reference_no', 'memo_date', 'memo_subject',
-                'approval_form'
-            )
-        }),
-        ('Approval Information', {
-            'fields': (
-                'approved_by', 'approval_date', 'remarks'
+               'permissions_requested',
             )
         }),
 
-        ('Document Information', {
-            'fields': (
-                'document_type', 'citizen_no', 'province'
-            )
-        }),
+
         ('Office Information', {
             'fields': ('designation', 'contact_email')
         }),
@@ -134,6 +127,9 @@ class UserRequestAdmin(admin.ModelAdmin):
         if not change:  # Only set requested_by when creating new object
             obj.requested_by = request.user
         super().save_model(request, obj, form, change)
+
+        if not obj.department:
+            obj.department = request.user.department
 
     def download_pdf(self, request, object_id):
         """Generate PDF report for the user request"""
@@ -533,3 +529,181 @@ class MenuItemAdmin(admin.ModelAdmin):
         else:
             form = UploadExcelForm()
         return render(request, "admin/upload_excel.html", {"form": form, "title": "Upload Menu Items via Excel"})
+
+
+from django.contrib import admin
+from django.utils.html import format_html
+from django.http import HttpResponse
+from reportlab.pdfgen import canvas
+from reportlab.lib.pagesizes import letter
+from .models import UserAccessRequest
+
+
+@admin.register(UserAccessRequest)
+class UserAccessRequestAdmin(admin.ModelAdmin):
+    list_display = ['full_name', 'designation', 'system_type', 'status_badge', 'created_at', 'download_pdf']
+    list_filter = ['status', 'system_type', 'designation', 'requested_dept', 'created_at']
+    search_fields = ['full_name', 'mobile', 'email', 'designation']
+
+    readonly_fields = ['requested_by', 'requested_dept', 'created_at', 'updated_at']
+
+    fieldsets = (
+        ('User Details', {
+            'fields': ('full_name', 'mobile', 'email', 'designation')
+        }),
+        ('System Access', {
+            'fields': ('system_type', 'approval_form')
+        }),
+        ('Request Info (Auto)', {
+            'fields': ('requested_by', 'requested_dept')
+        }),
+        ('Status', {
+            'fields': ('status',)
+        }),
+    )
+
+    def status_badge(self, obj):
+        colors = {'PENDING': 'orange', 'APPROVED': 'green', 'REJECTED': 'red'}
+        color = colors.get(obj.status, 'gray')
+        return format_html(
+            '<span style="background: {}; color: white; padding: 2px 8px; border-radius: 12px; font-size: 12px;">{}</span>',
+            color, obj.get_status_display()
+        )
+
+    status_badge.short_description = 'Status'
+
+    def download_pdf(self, obj):
+        return format_html(
+            '<a href="download_pdf/{}/" class="button">📄 PDF</a>', obj.id
+        )
+
+    download_pdf.short_description = 'PDF'
+
+    def save_model(self, request, obj, form, change):
+        if not obj.pk:
+            obj.requested_by = request.user
+        super().save_model(request, obj, form, change)
+
+    def get_urls(self):
+        from django.urls import path
+        urls = super().get_urls()
+        custom_urls = [
+            path('download_pdf/<int:request_id>/', self.download_pdf_view, name='download_pdf'),
+        ]
+        return custom_urls + urls
+
+    def download_pdf_view(self, request, request_id):
+        access_request = UserAccessRequest.objects.get(id=request_id)
+
+        response = HttpResponse(content_type='application/pdf')
+        filename = f"access_request_{access_request.full_name}.pdf"
+        response['Content-Disposition'] = f'attachment; filename="{filename}"'
+
+        p = canvas.Canvas(response, pagesize=letter)
+        width, height = letter
+
+        # Title
+        p.setFont("Helvetica-Bold", 16)
+        p.drawString(100, height - 50, "User Access Request Form")
+        p.line(100, height - 55, width - 100, height - 55)
+
+        # Three Column Layout with grid
+        col1_x = 50
+        col2_x = 220
+        col3_x = 390
+        grid_width = width - 100
+
+        # Start position for columns
+        start_y = height - 90
+
+        # Draw grid background
+        p.setStrokeColorRGB(0.9, 0.9, 0.9)  # Light gray for grid
+        p.setLineWidth(0.5)
+
+        # Vertical grid lines
+        p.line(col2_x - 10, start_y + 10, col2_x - 10, start_y - 100)
+        p.line(col3_x - 10, start_y + 10, col3_x - 10, start_y - 100)
+
+        # Horizontal grid lines
+        p.line(col1_x, start_y, grid_width, start_y)
+        p.line(col1_x, start_y - 25, grid_width, start_y - 25)
+        p.line(col1_x, start_y - 45, grid_width, start_y - 45)
+        p.line(col1_x, start_y - 65, grid_width, start_y - 65)
+        p.line(col1_x, start_y - 85, grid_width, start_y - 85)
+        p.line(col1_x, start_y - 105, grid_width, start_y - 105)
+
+        # Reset stroke color
+        p.setStrokeColorRGB(0, 0, 0)
+
+        # Column 1: User Details
+        p.setFont("Helvetica-Bold", 12)
+        p.drawString(col1_x, start_y, "User Information:")
+        p.setFont("Helvetica", 10)
+
+        y_position = start_y - 25
+        p.drawString(col1_x + 5, y_position, f"Full Name: {access_request.full_name}")
+
+        y_position -= 20
+        p.drawString(col1_x + 5, y_position, f"Mobile: {access_request.mobile}")
+
+        y_position -= 20
+        p.drawString(col1_x + 5, y_position, f"Email: {access_request.email}")
+
+        y_position -= 20
+        p.drawString(col1_x + 5, y_position, f"Designation: {access_request.designation}")
+
+        # Column 2: System Access Details
+        y_position = start_y
+        p.setFont("Helvetica-Bold", 12)
+        p.drawString(col2_x, y_position, "Access Details:")
+        p.setFont("Helvetica", 10)
+
+        y_position -= 25
+        p.drawString(col2_x + 5, y_position, f"System Type: {access_request.get_system_type_display()}")
+
+        y_position -= 20
+        p.drawString(col2_x + 5, y_position, f"Status: {access_request.get_status_display()}")
+
+        y_position -= 20
+        p.drawString(col2_x + 5, y_position, f"Request Date: {access_request.created_at.strftime('%Y-%m-%d')}")
+
+        # Column 3: Approval Details
+        y_position = start_y
+        p.setFont("Helvetica-Bold", 12)
+        p.drawString(col3_x, y_position, "Approval Details:")
+        p.setFont("Helvetica", 10)
+
+        y_position -= 25
+        requested_by = access_request.requested_by.get_full_name() if access_request.requested_by else "Not set"
+        p.drawString(col3_x + 5, y_position, f"Requested By: {requested_by}")
+
+        y_position -= 20
+        dept_name = access_request.requested_dept.name if access_request.requested_dept else "Not set"
+        p.drawString(col3_x + 5, y_position, f"Department: {dept_name}")
+
+        y_position -= 20
+        approved_by = "To be approved"
+        p.drawString(col3_x + 5, y_position, f"Approved By: {approved_by}")
+
+        # Signature section below the grid
+        signature_start = start_y - 130
+
+        # Approved By section just below grid
+        p.setFont("Helvetica-Bold", 12)
+        p.drawString(col1_x, signature_start, "Authorization:")
+        p.setFont("Helvetica", 10)
+
+        signature_y = signature_start - 40
+
+        # Signature lines
+        p.line(col1_x, signature_y, col2_x - 20, signature_y)
+        p.line(col2_x, signature_y, col3_x - 20, signature_y)
+
+        # Signature labels
+        p.setFont("Helvetica-Bold", 10)
+        p.drawString(col1_x, signature_y - 15, "Requester Signature")
+        p.drawString(col2_x, signature_y - 15, "Department Head Approval")
+
+        p.showPage()
+        p.save()
+        return response
