@@ -12,7 +12,8 @@ class ITAssetAdmin(admin.ModelAdmin):
         'department',
         'fiscal_year',
         'criticality_badge',
-        'license_status'
+        'license_status',
+        'ip_address',
     )
 
     list_filter = (
@@ -24,13 +25,13 @@ class ITAssetAdmin(admin.ModelAdmin):
         'procurement_method'
     )
 
-    search_fields = ('name', 'asset_tag', 'custodian', 'invoice_no')
+    search_fields = ('name', 'asset_tag', 'custodian', 'invoice_no', 'ip_address')
 
     readonly_fields = ('risk_score', 'criticality')
 
     fieldsets = (
         ('आधारभूत विवरण (Basic Info)', {
-            'fields': ('asset_tag', 'name', 'category', 'status', 'specs')
+            'fields': ('asset_tag', 'name', 'ip_address', 'category', 'status', 'specs')
         }),
         ('खरिद विवरण (Procurement - PPA 2063)', {
             'fields': (

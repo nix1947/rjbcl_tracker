@@ -11,22 +11,16 @@ class TaskDiscussionInline(admin.TabularInline):
     extra = 1
     readonly_fields = ('user', 'created_at')
 
-    def save_new(self, form, commit=True):
-        obj = super().save_new(form, commit=False)
-        obj.user = form.user   # user will be attached dynamically
-        if commit:
-            obj.save()
-        return obj
+    # Exclude user from the form since we'll set it automatically
+    exclude = ('user',)
 
 
 @admin.register(Task)
 class TaskAdmin(admin.ModelAdmin):
-
     # Only show title and description in the form
-    fields = ('title','deadline', 'status', 'description', 'assigned_to', 'document')
+    fields = ('title', 'deadline', 'status', 'description', 'assigned_to', 'document')
 
-    list_filter = ('status', 'deadline',   'department', 'assigned_to')
-
+    list_filter = ('status', 'deadline', 'department', 'assigned_to')
 
     # Inline comments
     inlines = [TaskDiscussionInline]
@@ -36,7 +30,8 @@ class TaskAdmin(admin.ModelAdmin):
     def get_queryset(self, request):
         qs = super().get_queryset(request)
 
-        if request.user.is_superuser or getattr(request.user, 'is_it_dept', False) or getattr(request.user, 'is_global', False):
+        if request.user.is_superuser or getattr(request.user, 'is_it_dept', False) or getattr(request.user, 'is_global',
+                                                                                              False):
             return qs
 
         if hasattr(request.user, 'department'):
@@ -45,7 +40,6 @@ class TaskAdmin(admin.ModelAdmin):
         return qs.none()
 
     def save_model(self, request, obj, form, change):
-
         # Set the creator on first save
         if not obj.pk:
             obj.created_by = request.user
@@ -55,6 +49,17 @@ class TaskAdmin(admin.ModelAdmin):
                 obj.department = request.user.department
 
         super().save_model(request, obj, form, change)
+
+    def save_formset(self, request, form, formset, change):
+        """
+        Automatically set the user for TaskDiscussion inline entries
+        """
+        instances = formset.save(commit=False)
+        for instance in instances:
+            if isinstance(instance, TaskDiscussion) and not instance.pk:
+                instance.user = request.user
+            instance.save()
+        formset.save_m2m()
 
     def has_delete_permission(self, request, obj=None):
         """
@@ -80,6 +85,4 @@ class TaskAdmin(admin.ModelAdmin):
         # Show all assigned users as comma-separated string
         return ", ".join([user.username for user in obj.assigned_to.all()])
 
-
-
-
+    assigned_users.short_description = 'Assigned Users'
