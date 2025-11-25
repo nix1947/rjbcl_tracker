@@ -31,9 +31,9 @@ from django.contrib.auth.admin import UserAdmin as BaseUserAdmin
 
 class UserAdmin(BaseUserAdmin):
     model = User
-    list_display = ('email', 'username', 'full_name', 'department', 'is_it_dept', 'is_global', 'mobile', 'is_staff', 'is_active', 'date_joined')
+    list_display = ('email', 'mobile',  'username', 'full_name', 'department', 'is_it_dept', 'is_global', 'is_staff', 'is_active', 'date_joined')
     list_filter = ('is_staff', 'department','is_active', 'date_joined')
-    search_fields = ('email', 'department', 'username', 'full_name', 'mobile')
+    search_fields = ('email', 'department__name', 'username', 'full_name', 'mobile')
     ordering = ('-date_joined',)
     fieldsets = (
         (None, {'fields': ('email', 'password')}),

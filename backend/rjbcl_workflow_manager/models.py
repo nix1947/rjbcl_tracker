@@ -28,35 +28,17 @@ class ChangeRequest(models.Model):
 
     # --- Request Categories (Generic for all departments) ---
     CATEGORY_CHOICES = [
-        ('DATA_REQUEST', 'तथ्याङ्क माग (Data Request)'),
-        ('DATA_MODIFICATION', 'तथ्याङ्क परिमार्जन (Data Modification)'),
-        ('SYSTEM_ACCESS', 'प्रणाली पहुँच (System Access)'),
-        ('NEW_FEATURE', 'नयाँ विशेषता (New Feature)'),
-        ('BUG_FIX', 'समस्या समाधान (Bug Fix)'),
-        ('CONFIGURATION', 'कन्फिगरेसन परिवर्तन (Configuration Change)'),
-        ('HARDWARE', 'हार्डवेयर अनुरोध (Hardware Request)'),
-        ('SOFTWARE', 'सफ्टवेयर स्थापना (Software Installation)'),
-        ('TRAINING', 'तालिम अनुरोध (Training Request)'),
-        ('REPORT', 'रिपोर्ट अनुरोध (Report Request)'),
-        ('POLICY', 'नीति परिवर्तन (Policy Change)'),
+        # Life-Insurance Specific (Top 5)
+        ('UNDERWRITING_ISSUE', 'बीमालेखन समस्या (Underwriting Issue)'),
+        ('CLAIM_PROCESSING_ISSUE', 'दाबी प्रसोधन समस्या (Claim Processing Issue)'),
+        ('PREMIUM_ACCOUNTING_ISSUE', 'प्रिमियम / लेखा समस्या (Premium & Accounting Issue)'),
+        ('POLICY_SERVICE_ISSUE', 'पोलिसी सेवा समस्या (Policy Servicing Issue)'),
+        ('AGENT_PORTAL_ISSUE', 'अभिकर्ता पोर्टल / आयोग समस्या (Agent Portal / Commission Issue)'),
 
-        # Added Nepal-specific + life-insurance operational request types
-        ('TONER_REFILL', 'टोनर रिफिल / प्रिन्टर सामग्री (Toner / Printer Consumables)'),
+        # General Office IT Issues (Added 3)
+        ('NETWORK_ISSUE', 'नेटवर्क / इन्टरनेट समस्या (Network/Internet Issue)'),
         ('PRINTER_ISSUE', 'प्रिन्टर / स्क्यानर समस्या (Printer/Scanner Issue)'),
-        ('ID_CARD', 'कर्मचारी ID Card / Access Card Request'),
-        ('ATTENDANCE', 'हाजिरी/बायोमेट्रिक समस्या (Attendance/Biometric Issue)'),
-        ('INTERNET_WIFI', 'इन्टरनेट / WiFi समस्या (Internet/WiFi Issue)'),
-        ('EMAIL_SUPPORT', 'ईमेल समर्थन (Email Support)'),
-        ('MEETING_SUPPORT', 'मिटिङ / Zoom / Projector Support'),
-        ('CCTV', 'CCTV Footage / Camera Issue'),
-        ('BACKUP_RESTORE', 'ब्याकअप पुनःप्राप्ति (Backup Restore Request)'),
-        ('VENDOR_COORD', 'Vendor Coordination Request'),
-        ('OFFICE_SHIFT', 'अफिस सार्ने / PC Movement (Office Shifting Support)'),
-        ('WORKFLOW_ISSUE', 'Workflow / Approval समस्या'),
-        ('DIGITAL_SIGNATURE', 'डिजिटल Signature / Token Issue'),
-        ('ERP_SUPPORT', 'ERP/Core Insurance Support (Non-Change Issues)'),
-
-        ('OTHER', 'अन्य (Other)'),
+        ('GENERAL_OFFICE_ISSUE', 'सामान्य अफिस समस्या (General Office Issue)'),
     ]
 
     # --- Priority Levels ---
