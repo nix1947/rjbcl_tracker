@@ -167,8 +167,10 @@ EMAIL_USE_TLS = True
 DEFAULT_FROM_EMAIL = 'your_email@gmail.com'
 
 ## Media and static settings.
-MEDIA_ROOT = os.path.join(BASE_DIR, 'media')
-MEDIA_URL = '/media/'
+
+
+MEDIA_ROOT = BASE_DIR / "media"
+MEDIA_URL = "/media/"
 
 # Static files (CSS, JavaScript, Images)
 STATIC_URL = '/static/'
