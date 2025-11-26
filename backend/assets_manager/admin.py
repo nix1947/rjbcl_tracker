@@ -31,7 +31,7 @@ class ITAssetAdmin(admin.ModelAdmin):
 
     fieldsets = (
         ('आधारभूत विवरण (Basic Info)', {
-            'fields': ('asset_tag', 'name', 'ip_address', 'category', 'status', 'specs')
+            'fields': ('asset_tag', 'name', 'ip_address', 'category', 'status', 'specs', 'document')
         }),
         ('खरिद विवरण (Procurement - PPA 2063)', {
             'fields': (
