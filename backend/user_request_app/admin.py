@@ -549,7 +549,7 @@ class UserAccessRequestAdmin(admin.ModelAdmin):
 
     fieldsets = (
         ('User Details', {
-            'fields': ('full_name', 'mobile', 'email', 'designation')
+            'fields': ('full_name', 'department', 'mobile', 'email', 'designation',)
         }),
         ('System Access', {
             'fields': ('system_type', 'approval_form')

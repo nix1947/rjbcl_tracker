@@ -45,6 +45,7 @@ class ITAsset(models.Model):
     category = models.CharField(max_length=5, choices=CATEGORY_CHOICES)
     status = models.CharField(max_length=10, choices=LIFECYCLE_STATUS, default='ACTIVE')
     ip_address = models.GenericIPAddressField(null=True, blank=True)
+    document = models.FileField(upload_to="it_assets_document/", blank=True, null=True)
 
     # Procurement Details (PPA Compliance)
     fiscal_year = models.CharField(
