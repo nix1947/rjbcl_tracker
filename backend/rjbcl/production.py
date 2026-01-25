@@ -5,7 +5,7 @@ load_dotenv()  # Load from .env file
 
 
 DEBUG = False
-#ok
+#ok1
 
 
 DATABASES = {
