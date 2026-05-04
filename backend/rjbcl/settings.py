@@ -77,7 +77,7 @@ MIDDLEWARE = [
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
 
     # Middleware
-    'statement_tracker.middleware.AutoLogoutMiddleware',
+    'statement_tracker.middleware.SecureSessionMiddleware',
 ]
 
 ROOT_URLCONF = 'rjbcl.urls'
@@ -205,3 +205,4 @@ CSRF_COOKIE_SECURE = True
 
 SESSION_EXPIRE_AT_BROWSER_CLOSE = True
 SESSION_COOKIE_AGE = 1800
+
