@@ -191,3 +191,10 @@ TINYMCE_DEFAULT_CONFIG = {
     "plugins": "link image preview codesample table lists",
     "toolbar": "undo redo | bold italic | alignleft aligncenter alignright | bullist numlist | link image | preview codesample",
 }
+
+
+# Session handling
+SESSION_COOKIE_SECURE = True
+SESSION_COOKIE_HTTPONLY = True
+SESSION_COOKIE_SAMESITE = 'Strict'
+CSRF_COOKIE_SECURE = True
