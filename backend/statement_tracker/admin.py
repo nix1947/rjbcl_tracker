@@ -355,7 +355,7 @@ class BankStatementChangeHistoryAdmin(admin.ModelAdmin):
 
     list_display = (
         'bank_code', 'bank_name','changed_at', 'changed_by', 'policy_no',
-        'bank_code', 'bank_name', 'bank_account_no', 'bank_deposit_date',
+        'bank_code', 'bank_name', 'ban  k_account_no', 'bank_deposit_date',
         'balance', 'debit', 'credit', 'branch', 'source', 'action'
     )
     list_filter = ('changed_at', 'changed_by', 'bank_code', 'bank_name')
