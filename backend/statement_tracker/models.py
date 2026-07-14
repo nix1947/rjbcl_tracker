@@ -212,13 +212,7 @@ class BankStatement(models.Model):
         ]
 
 
-    def clean(self):
-        super().clean()
 
-        if self.debit != self.system_amount:
-            raise ValidationError(
-                "Debit amount and system amount must be equal."
-            )
 
 
 class BankStatementChangeHistory(models.Model):
