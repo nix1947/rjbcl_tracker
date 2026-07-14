@@ -215,9 +215,9 @@ class BankStatement(models.Model):
     def clean(self):
         super().clean()
 
-        if self.credit != self.system_amount:
+        if self.debit != self.system_amount:
             raise ValidationError(
-                "Credit amount and system amount must be equal."
+                "Debit amount and system amount must be equal."
             )
 
 
